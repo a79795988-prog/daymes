@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth bg-black">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+  <!-- Primary Meta Tags -->
+  <title>DAYMES | Modern Healthcare & Smart Pharmacy</title>
+  <meta name="title"       content="DAYMES | Modern Healthcare & Smart Pharmacy">
+  <meta name="description" content="Order medicines, manage refills, track daily medication schedules, and get instant healthcare guidance from DAYMES Assistant — all in one trusted place.">
+  <meta name="keywords"    content="DAYMES, online pharmacy, medicine order, prescription delivery, healthcare, refill, health app">
+  <meta name="author"      content="DAYMES Healthcare">
+  <meta name="theme-color" content="#000000">
+
+  <!-- Open Graph / Social Share -->
+  <meta property="og:type"        content="website">
+  <meta property="og:title"       content="DAYMES | Modern Healthcare & Smart Pharmacy">
+  <meta property="og:description" content="Order medicines, manage refills, and get instant healthcare guidance in one place.">
+  <meta property="og:image"       content="https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=1200&q=80">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card"        content="summary_large_image">
+  <meta name="twitter:title"       content="DAYMES | Modern Healthcare & Smart Pharmacy">
+  <meta name="twitter:description" content="Order medicines, manage refills, and get instant healthcare guidance in one place.">
+  <meta name="twitter:image"       content="https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=1200&q=80">
+
+  <!-- Mobile / PWA -->
+  <meta name="mobile-web-app-capable"       content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title"   content="DAYMES">
+  <meta name="application-name"             content="DAYMES">
+  <meta name="format-detection"             content="telephone=no">
+
+  <!-- Inline SVG Favicon (no external file needed) -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23000'/><path d='M50 18v64M18 50h64' stroke='%2306b6d4' stroke-width='14' stroke-linecap='round'/></svg>">
+
+  <!-- Preconnect to CDN origins for faster loading -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.tailwindcss.com">
+  <link rel="preconnect" href="https://unpkg.com">
+  <link rel="preconnect" href="https://images.unsplash.com">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              500: '#0284c7',
+              600: '#0284c7',
+              700: '#0369a1',
+            },
+            accent: {
+              500: '#10b981',
+              600: '#059669',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="min-h-screen flex flex-col bg-black text-slate-100 antialiased selection:bg-sky-500 selection:text-white">
+
+  <!-- ═══════════════════════════════════════════════════
+       ANIMATED BACKGROUND CANVAS
+       Fixed behind all content, z-index: -1
+  ════════════════════════════════════════════════════ -->
+  <div id="daymes-bg" aria-hidden="true">
+    <!-- Floating cyan/blue glow orbs -->
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-orb bg-orb-3"></div>
+    <div class="bg-orb bg-orb-4"></div>
+    <div class="bg-orb bg-orb-5"></div>
+    <!-- Subtle grid mesh overlay -->
+    <div class="bg-grid"></div>
+    <!-- Film-grain noise for premium texture -->
+    <div class="bg-noise"></div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed top-20 right-5 z-50 flex flex-col gap-2.5 max-w-sm w-full pointer-events-none"></div>
+
+  <!-- NAVIGATION HEADER -->
+  <header class="sticky top-0 z-40 w-full glass-header border-b border-slate-800/80 transition-all">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+      
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-3 cursor-pointer" onclick="navigateTo('home')">
+        <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-sky-500 to-teal-500 text-white flex items-center justify-center shadow-md shadow-sky-500/20">
+          <i data-lucide="cross" class="w-6 h-6 stroke-[2.5]"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-1">
+            <span class="text-2xl font-black tracking-tight text-white">DAYMES</span>
+          </div>
+          <span class="text-[10px] font-bold text-emerald-400 tracking-wider uppercase block -mt-1">Verified Healthcare</span>
+        </div>
+      </div>
+
+      <!-- Desktop Navigation Links -->
+      <nav class="hidden lg:flex items-center gap-7 text-sm font-semibold text-slate-300">
+        <button onclick="navigateTo('home')" class="nav-link active py-1 hover:text-sky-400" data-tab="home">Home</button>
+        <button onclick="navigateTo('medicines')" class="nav-link py-1 hover:text-sky-400" data-tab="medicines">Medicines</button>
+        <button onclick="requireAuth('reorder')" class="nav-link py-1 hover:text-sky-400 flex items-center gap-1.5" data-tab="reorder">
+          <span>Reorder</span>
+          <span class="px-1.5 py-0.5 text-[10px] font-extrabold bg-emerald-950 text-emerald-300 rounded-full border border-emerald-800">Smart</span>
+        </button>
+        <button onclick="requireAuth('orders')" class="nav-link py-1 hover:text-sky-400" data-tab="orders">My Orders</button>
+        <button onclick="requireAuth('healthcare')" class="nav-link py-1 hover:text-sky-400" data-tab="healthcare">Health Care</button>
+        <button onclick="navigateTo('contact')" class="nav-link py-1 hover:text-sky-400" data-tab="contact">Contact</button>
+      </nav>
+
+      <!-- Search Bar & Cart Action -->
+      <div class="flex items-center gap-3">
+        <!-- Global Search Input -->
+        <div class="relative hidden sm:block w-48 md:w-64">
+          <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+          <input id="global-search-input" type="text" placeholder="Search medicines..." class="w-full pl-9 pr-3 py-2 bg-slate-900/90 hover:bg-slate-900 focus:bg-slate-950 text-xs font-medium rounded-xl border border-slate-800 text-white placeholder-slate-400 focus:border-sky-500 focus:ring-2 focus:ring-sky-950 outline-none transition-all" />
+        </div>
+
+        <!-- Sign In Button (logged-out state) -->
+        <button id="auth-signin-btn" onclick="openSignInModal()" class="hidden sm:flex items-center gap-1.5 px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-xl text-xs shadow-sm transition-all">
+          <i data-lucide="log-in" class="w-4 h-4"></i>
+          <span>Sign In</span>
+        </button>
+
+        <!-- Profile Menu (logged-in state) -->
+        <div id="auth-profile-menu" class="hidden relative">
+          <button onclick="toggleProfileDropdown()" class="flex items-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl transition-all">
+            <div class="w-7 h-7 rounded-full bg-gradient-to-br from-sky-500 to-teal-500 text-white text-xs font-black flex items-center justify-center flex-shrink-0">
+              <span id="auth-profile-initial">U</span>
+            </div>
+            <span id="auth-profile-name" class="text-xs font-bold text-white hidden sm:block max-w-[80px] truncate"></span>
+            <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
+          </button>
+
+          <!-- Dropdown -->
+          <div id="profile-dropdown" class="hidden absolute right-0 top-full mt-2 w-52 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden z-50">
+            <div class="px-4 py-3 border-b border-slate-800 bg-slate-950">
+              <p id="profile-dropdown-name" class="text-xs font-extrabold text-white truncate"></p>
+              <p id="profile-dropdown-email" class="text-[10px] text-slate-400 truncate mt-0.5"></p>
+            </div>
+            <div class="py-1">
+              <button onclick="toggleProfileDropdown(); navigateTo('healthcare')" class="w-full text-left px-4 py-2.5 text-xs font-semibold text-slate-200 hover:bg-slate-800 flex items-center gap-2.5 transition-all">
+                <i data-lucide="user" class="w-4 h-4 text-sky-400"></i>
+                <span>My Profile</span>
+              </button>
+              <button onclick="toggleProfileDropdown(); navigateTo('orders')" class="w-full text-left px-4 py-2.5 text-xs font-semibold text-slate-200 hover:bg-slate-800 flex items-center gap-2.5 transition-all">
+                <i data-lucide="package" class="w-4 h-4 text-emerald-400"></i>
+                <span>My Orders</span>
+              </button>
+              <button onclick="toggleProfileDropdown(); navigateTo('reorder')" class="w-full text-left px-4 py-2.5 text-xs font-semibold text-slate-200 hover:bg-slate-800 flex items-center gap-2.5 transition-all">
+                <i data-lucide="refresh-cw" class="w-4 h-4 text-amber-400"></i>
+                <span>Reorder Medicines</span>
+              </button>
+              <div class="border-t border-slate-800 mt-1 pt-1">
+                <button onclick="toggleProfileDropdown(); logoutUser()" class="w-full text-left px-4 py-2.5 text-xs font-semibold text-rose-400 hover:bg-rose-950/50 flex items-center gap-2.5 transition-all">
+                  <i data-lucide="log-out" class="w-4 h-4"></i>
+                  <span>Sign Out</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cart Drawer Toggle Button -->
+        <button onclick="toggleCartDrawer(true)" class="relative p-2.5 bg-slate-900 hover:bg-slate-800 text-slate-200 hover:text-sky-400 rounded-xl border border-slate-800 transition-all flex items-center justify-center">
+          <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+          <span class="cart-count-badge hidden absolute -top-1.5 -right-1.5 w-5 h-5 bg-rose-500 text-white font-extrabold text-[10px] rounded-full flex items-center justify-center shadow-sm">0</span>
+        </button>
+
+        <!-- Mobile Menu Toggle Button -->
+        <button onclick="document.getElementById('mobile-menu').classList.toggle('hidden')" class="lg:hidden p-2 text-slate-300 hover:text-white">
+          <i data-lucide="menu" class="w-6 h-6"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Dropdown Navigation Menu -->
+    <div id="mobile-menu" class="hidden lg:hidden border-t border-slate-800 bg-slate-900/95 backdrop-blur px-4 py-3 space-y-2 text-sm font-semibold text-slate-200">
+      <button onclick="navigateTo('home'); document.getElementById('mobile-menu').classList.add('hidden')" class="block w-full text-left py-2 border-b border-slate-800">Home</button>
+      <button onclick="navigateTo('medicines'); document.getElementById('mobile-menu').classList.add('hidden')" class="block w-full text-left py-2 border-b border-slate-800">Medicines</button>
+      <button onclick="requireAuth('reorder')" class="block w-full text-left py-2 border-b border-slate-800">Reorder Medicines</button>
+      <button onclick="requireAuth('orders')" class="block w-full text-left py-2 border-b border-slate-800">My Orders</button>
+      <button onclick="requireAuth('healthcare')" class="block w-full text-left py-2 border-b border-slate-800">Health Care Dashboard</button>
+      <button onclick="navigateTo('contact'); document.getElementById('mobile-menu').classList.add('hidden')" class="block w-full text-left py-2 border-b border-slate-800">Contact Support</button>
+      <!-- Mobile auth -->
+      <button id="mobile-signin-btn" onclick="openSignInModal(); document.getElementById('mobile-menu').classList.add('hidden')" class="block w-full text-left py-2 text-sky-400 font-bold">Sign In / Create Account</button>
+      <div id="mobile-profile-section" class="hidden border-t border-slate-800 pt-2 space-y-1">
+        <p id="mobile-profile-name" class="text-[11px] font-bold text-slate-300 pb-1">Welcome back!</p>
+        <button onclick="logoutUser(); document.getElementById('mobile-menu').classList.add('hidden')" class="block w-full text-left py-2 text-rose-400 font-bold text-sm">Sign Out</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN VIEW CONTAINER -->
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- ==================== 1. HOME PAGE VIEW ==================== -->
+    <section id="view-home" class="page-view space-y-16">
+      
+      <!-- Hero Section -->
+      <div class="relative bg-gradient-to-br from-sky-950 via-slate-900 to-sky-950 rounded-3xl p-8 sm:p-12 lg:p-16 text-white overflow-hidden shadow-2xl border border-slate-800/80">
+        <!-- Background Medical Grid Glow -->
+        <div class="absolute -right-20 -bottom-20 w-96 h-96 bg-sky-500/20 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute right-40 top-0 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="grid lg:grid-cols-12 gap-8 items-center relative z-10">
+          <div class="lg:col-span-7 space-y-6">
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur border border-white/20 text-xs font-semibold text-sky-200">
+              <i data-lucide="shield-check" class="w-4 h-4 text-teal-400"></i>
+              <span>Licensed Online Pharmacy & Smart Healthcare Portal</span>
+            </div>
+
+            <h1 class="text-3xl sm:text-5xl font-black tracking-tight text-white leading-tight">
+              Your Medicines, <br class="hidden sm:inline" />
+              <span class="bg-gradient-to-r from-sky-400 via-teal-300 to-emerald-400 bg-clip-text text-transparent">Simplified.</span>
+            </h1>
+
+            <p class="text-sm sm:text-base text-slate-300 max-w-xl font-normal leading-relaxed">
+              Order medicines, manage refills, track daily medication schedules, and get instant healthcare guidance from our DAYMES Assistant in one trusted place.
+            </p>
+
+            <div class="flex flex-wrap items-center gap-4 pt-2">
+              <button onclick="navigateTo('medicines')" class="px-7 py-3.5 bg-gradient-to-r from-sky-500 to-teal-500 hover:from-sky-600 hover:to-teal-600 text-white font-extrabold rounded-2xl text-sm shadow-lg shadow-sky-500/30 transition-all flex items-center gap-2">
+                <span>Order Medicines</span>
+                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+              </button>
+              
+              <button onclick="navigateTo('reorder')" class="px-7 py-3.5 bg-white/10 hover:bg-white/20 text-white font-extrabold rounded-2xl text-sm border border-white/20 backdrop-blur transition-all flex items-center gap-2">
+                <i data-lucide="refresh-cw" class="w-4 h-4 text-emerald-400"></i>
+                <span>Reorder Now</span>
+              </button>
+            </div>
+
+            <!-- Hero Trust Stats -->
+            <div class="pt-6 border-t border-white/10 grid grid-cols-3 gap-4">
+              <div>
+                <span class="text-xl sm:text-2xl font-black text-white">100%</span>
+                <p class="text-[11px] text-slate-400">Verified Products</p>
+              </div>
+              <div>
+                <span class="text-xl sm:text-2xl font-black text-emerald-400">24/7</span>
+                <p class="text-[11px] text-slate-400">Care Assistant Support</p>
+              </div>
+              <div>
+                <span class="text-xl sm:text-2xl font-black text-sky-400">Express</span>
+                <p class="text-[11px] text-slate-400">Prescription Delivery</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hero Healthcare Graphic -->
+          <div class="lg:col-span-5 flex justify-center">
+            <div class="relative w-full max-w-sm glass-card p-6 rounded-3xl shadow-2xl text-white space-y-4">
+              <div class="flex items-center gap-3 pb-3 border-b border-slate-700">
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
+                  <i data-lucide="activity" class="w-5 h-5"></i>
+                </div>
+                <div>
+                  <h4 class="text-xs font-bold">DAYMES Care Portal</h4>
+                  <p class="text-[10px] text-slate-400">Live Refill & Order Health Status</p>
+                </div>
+              </div>
+
+              <div class="space-y-2.5">
+                <div class="bg-slate-800/80 p-3 rounded-xl flex items-center justify-between text-xs border border-slate-700/50">
+                  <span class="font-semibold text-slate-200">Paracetamol 500mg</span>
+                  <span class="px-2 py-0.5 text-[10px] font-extrabold bg-emerald-500/20 text-emerald-300 rounded-md">Refill Ready</span>
+                </div>
+                <div class="bg-slate-800/80 p-3 rounded-xl flex items-center justify-between text-xs border border-slate-700/50">
+                  <span class="font-semibold text-slate-200">Vitamin C Daily</span>
+                  <span class="px-2 py-0.5 text-[10px] font-extrabold bg-sky-500/20 text-sky-300 rounded-md">On Schedule</span>
+                </div>
+              </div>
+
+              <div class="pt-2 text-center">
+                <span class="text-[11px] text-slate-400 font-medium">Over 25,000+ satisfied healthcare orders delivered</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature Cards Section -->
+      <div class="space-y-6">
+        <div class="text-center max-w-2xl mx-auto">
+          <h2 class="text-2xl font-black text-white">Designed for Effortless Healthcare</h2>
+          <p class="text-xs text-slate-400 mt-1">Smart tools to manage your family's prescriptions and daily wellness needs with complete peace of mind.</p>
+        </div>
+
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          
+          <!-- Card 1: Easy Reordering -->
+          <div onclick="navigateTo('reorder')" class="glass-card p-6 rounded-3xl shadow-card shadow-card-hover cursor-pointer group">
+            <div class="w-12 h-12 rounded-2xl bg-sky-950/80 text-sky-400 border border-sky-800/60 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <i data-lucide="refresh-cw" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-base font-bold text-white group-hover:text-sky-400 transition-colors">Easy Reordering</h3>
+            <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+              1-click refill workflow for routine prescription and OTC medications with status reminders.
+            </p>
+          </div>
+
+          <!-- Card 2: Medicine Reminders -->
+          <div onclick="navigateTo('healthcare')" class="glass-card p-6 rounded-3xl shadow-card shadow-card-hover cursor-pointer group">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-950/80 text-emerald-400 border border-emerald-800/60 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <i data-lucide="bell" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-base font-bold text-white group-hover:text-emerald-400 transition-colors">Medicine Reminders</h3>
+            <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+              Set dosage schedules, log daily intakes, and keep track of morning, afternoon, and evening pills.
+            </p>
+          </div>
+
+          <!-- Card 3: Secure Orders -->
+          <div onclick="navigateTo('medicines')" class="glass-card p-6 rounded-3xl shadow-card shadow-card-hover cursor-pointer group">
+            <div class="w-12 h-12 rounded-2xl bg-indigo-950/80 text-indigo-400 border border-indigo-800/60 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <i data-lucide="shield-check" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-base font-bold text-white group-hover:text-indigo-400 transition-colors">Secure Orders</h3>
+            <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+              Pharmacist-verified products, temperature-controlled packaging, and safe checkout protocols.
+            </p>
+          </div>
+
+          <!-- Card 4: Healthcare Support -->
+          <div onclick="toggleChatbot()" class="glass-card p-6 rounded-3xl shadow-card shadow-card-hover cursor-pointer group">
+            <div class="w-12 h-12 rounded-2xl bg-teal-950/80 text-teal-400 border border-teal-800/60 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <i data-lucide="bot" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-base font-bold text-white group-hover:text-teal-400 transition-colors">Healthcare Support</h3>
+            <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+              Instant answers from DAYMES Assistant for medication questions, store policies, and refill help.
+            </p>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Quick Category Shortcuts -->
+      <div class="glass-card rounded-3xl p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div class="space-y-1 text-center md:text-left">
+          <h3 class="text-lg font-extrabold text-white">Looking for specific health essential products?</h3>
+          <p class="text-xs text-slate-400">Explore pain relievers, daily multivitamin supplements, or emergency first aid supplies.</p>
+        </div>
+        <div class="flex flex-wrap gap-2 justify-center">
+          <button onclick="setCategoryFilter('Pain Relief'); navigateTo('medicines')" class="px-4 py-2 bg-slate-800 text-slate-200 hover:bg-sky-600 hover:text-white font-bold rounded-xl text-xs border border-slate-700 shadow-sm transition-all">Pain Relief</button>
+          <button onclick="setCategoryFilter('Vitamins & Supplements'); navigateTo('medicines')" class="px-4 py-2 bg-slate-800 text-slate-200 hover:bg-sky-600 hover:text-white font-bold rounded-xl text-xs border border-slate-700 shadow-sm transition-all">Vitamins & Supplements</button>
+          <button onclick="setCategoryFilter('First Aid & Care'); navigateTo('medicines')" class="px-4 py-2 bg-slate-800 text-slate-200 hover:bg-sky-600 hover:text-white font-bold rounded-xl text-xs border border-slate-700 shadow-sm transition-all">First Aid & Care</button>
+          <button onclick="setCategoryFilter('Medical Devices'); navigateTo('medicines')" class="px-4 py-2 bg-slate-800 text-slate-200 hover:bg-sky-600 hover:text-white font-bold rounded-xl text-xs border border-slate-700 shadow-sm transition-all">Medical Devices</button>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ==================== 2. MEDICINES PAGE VIEW ==================== -->
+    <section id="view-medicines" class="page-view hidden space-y-8">
+      
+      <!-- Page Header -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+        <div>
+          <h1 class="text-2xl font-black text-white">Medicines & Healthcare Catalog</h1>
+          <p class="text-xs text-slate-400 mt-1">Browse verified pharmaceutical medicines, vitamins, medical equipment, and daily hygiene products.</p>
+        </div>
+        <span id="catalog-results-count" class="text-xs font-bold text-slate-300 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl self-start md:self-auto">Showing products...</span>
+      </div>
+
+      <!-- Prescription Warning Banner -->
+      <div class="bg-amber-950/40 border border-amber-800/60 rounded-2xl p-4 flex items-start gap-3 text-amber-200">
+        <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5"></i>
+        <div class="text-xs space-y-0.5">
+          <p class="font-bold">Prescription Notice:</p>
+          <p class="text-amber-300/90 leading-relaxed">
+            Medications marked with a red <span class="font-extrabold text-rose-400">Rx</span> badge require a valid doctor prescription. You can upload your prescription image during checkout for verification by our certified pharmacists.
+          </p>
+        </div>
+      </div>
+
+      <!-- Search & Filters Toolbar -->
+      <div class="flex flex-col md:flex-row gap-4 justify-between items-stretch md:items-center">
+        <!-- Category Filter Pills -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-none">
+          <button data-category="All" class="category-pill px-4 py-2 bg-sky-600 text-white font-bold rounded-xl text-xs shadow-sm transition-all">All Products</button>
+          <button data-category="Pain Relief" class="category-pill px-4 py-2 bg-slate-900 text-slate-300 border border-slate-800 font-semibold rounded-xl text-xs hover:bg-slate-800 hover:text-white transition-all">Pain Relief</button>
+          <button data-category="Vitamins & Supplements" class="category-pill px-4 py-2 bg-slate-900 text-slate-300 border border-slate-800 font-semibold rounded-xl text-xs hover:bg-slate-800 hover:text-white transition-all">Vitamins</button>
+          <button data-category="First Aid & Care" class="category-pill px-4 py-2 bg-slate-900 text-slate-300 border border-slate-800 font-semibold rounded-xl text-xs hover:bg-slate-800 hover:text-white transition-all">First Aid</button>
+          <button data-category="Medical Devices" class="category-pill px-4 py-2 bg-slate-900 text-slate-300 border border-slate-800 font-semibold rounded-xl text-xs hover:bg-slate-800 hover:text-white transition-all">Medical Devices</button>
+          <button data-category="Personal Hygiene" class="category-pill px-4 py-2 bg-slate-900 text-slate-300 border border-slate-800 font-semibold rounded-xl text-xs hover:bg-slate-800 hover:text-white transition-all">Hygiene</button>
+          <button data-category="Prescription" class="category-pill px-4 py-2 bg-slate-900 text-slate-300 border border-slate-800 font-semibold rounded-xl text-xs hover:bg-slate-800 hover:text-white transition-all">Prescription (Rx)</button>
+        </div>
+
+        <!-- Catalog Search & Sort Controls -->
+        <div class="flex items-center gap-3">
+          <div class="relative flex-1 md:w-60">
+            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+            <input id="catalog-search-input" type="text" placeholder="Filter product name..." class="w-full pl-9 pr-3 py-2 bg-slate-900 border border-slate-800 text-white placeholder-slate-400 rounded-xl text-xs font-medium focus:border-sky-500 focus:ring-2 focus:ring-sky-950 outline-none" />
+          </div>
+
+          <select id="catalog-sort-select" class="px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs font-semibold text-slate-200 outline-none focus:border-sky-500">
+            <option value="featured">Sort: Featured</option>
+            <option value="price-low">Price: Low to High</option>
+            <option value="price-high">Price: High to Low</option>
+            <option value="name-az">Name: A to Z</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Product Cards Grid -->
+      <div id="products-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <!-- Rendered dynamically via JS -->
+      </div>
+    </section>
+
+
+    <!-- ==================== 3. SMART REORDERING SYSTEM VIEW ==================== -->
+    <section id="view-reorder" class="page-view hidden space-y-8">
+      
+      <!-- Reorder Header -->
+      <div class="bg-gradient-to-r from-emerald-950 via-teal-900 to-slate-900 rounded-3xl p-8 text-white shadow-xl border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div class="space-y-2">
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 backdrop-blur rounded-full text-xs font-bold border border-white/20">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-emerald-400"></i>
+            <span>Automated Refill System</span>
+          </div>
+          <h1 class="text-2xl sm:text-3xl font-black">Smart Reorder Portal</h1>
+          <p class="text-xs text-teal-200 max-w-xl">
+            View past routine medications, monitor refill schedules, select items, and place single-click repeat orders with automatic stock allocation.
+          </p>
+        </div>
+
+        <div class="bg-slate-900/80 backdrop-blur border border-slate-700/80 p-4 rounded-2xl text-center min-w-[180px]">
+          <span class="text-xs text-teal-300 font-medium block">Active Refills Due</span>
+          <span class="text-2xl font-black text-white">2 Medicines</span>
+        </div>
+      </div>
+
+      <!-- Reorder Table Controls -->
+      <div class="flex items-center justify-between px-2">
+        <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-200">
+          <input type="checkbox" onchange="toggleSelectAllReorder(this.checked)" checked class="w-4 h-4 rounded text-sky-600 focus:ring-sky-500 border-slate-700 bg-slate-800" />
+          <span>Select All Medicines</span>
+        </label>
+        <span class="text-xs font-semibold text-slate-400">Refill recommendations based on your usage timeline</span>
+      </div>
+
+      <!-- Reorder Items List -->
+      <div id="reorder-items-list" class="space-y-4">
+        <!-- Rendered dynamically via JS -->
+      </div>
+
+      <!-- Sticky Reorder Action Bar -->
+      <div class="sticky bottom-6 z-30 bg-slate-900 text-white p-5 rounded-2xl shadow-2xl border border-slate-800 flex items-center justify-between gap-4">
+        <div>
+          <span id="reorder-selected-count" class="text-xs text-slate-400 font-medium block">2 items selected</span>
+          <span id="reorder-total-amount" class="text-xl font-black text-emerald-400">$14.98</span>
+        </div>
+
+        <button id="reorder-submit-btn" onclick="executeReorderSelected()" class="px-8 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl text-sm shadow-lg shadow-emerald-600/30 transition-all flex items-center gap-2">
+          <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+          <span>Reorder Selected</span>
+        </button>
+      </div>
+    </section>
+
+
+    <!-- ==================== 4. MY ORDERS PAGE VIEW ==================== -->
+    <section id="view-orders" class="page-view hidden space-y-6">
+      
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+        <div>
+          <h1 class="text-2xl font-black text-white">Order Tracking Dashboard</h1>
+          <p class="text-xs text-slate-400 mt-1">Review active delivery updates, order totals, itemized receipts, and past purchase history.</p>
+        </div>
+        <button onclick="navigateTo('medicines')" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-bold transition-all self-start sm:self-auto">
+          + Place New Order
+        </button>
+      </div>
+
+      <!-- Orders List Container -->
+      <div id="orders-list" class="space-y-4">
+        <!-- Rendered dynamically via JS -->
+      </div>
+    </section>
+
+
+    <!-- ==================== 5. HEALTH CARE DASHBOARD VIEW ==================== -->
+    <section id="view-healthcare" class="page-view hidden space-y-8">
+      
+      <!-- User Profile Header Banner -->
+      <div class="bg-slate-900 rounded-3xl border border-slate-800 p-6 shadow-card flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div class="flex items-center gap-4">
+          <div class="w-16 h-16 rounded-2xl bg-sky-950 text-sky-400 font-black text-xl flex items-center justify-center border-2 border-sky-800">
+            SJ
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="text-xl font-bold text-white">Sarah Jenkins</h2>
+              <span class="px-2 py-0.5 text-[10px] font-extrabold bg-emerald-950 text-emerald-300 border border-emerald-800 rounded-full">Verified Account</span>
+            </div>
+            <p class="text-xs text-slate-400 mt-0.5">Patient ID: <span class="font-mono text-slate-200 font-bold">#PT-49201</span> | Blood Group: <span class="font-bold text-rose-400">O+</span></p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <div class="bg-slate-800/80 px-4 py-2.5 rounded-2xl border border-slate-700/70 text-center">
+            <span class="text-[10px] text-slate-400 font-bold uppercase block">Active Orders</span>
+            <span class="text-base font-extrabold text-white">1 Order</span>
+          </div>
+          <div class="bg-slate-800/80 px-4 py-2.5 rounded-2xl border border-slate-700/70 text-center">
+            <span class="text-[10px] text-slate-400 font-bold uppercase block">Refills Due</span>
+            <span class="text-base font-extrabold text-amber-400">2 Items</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Medication Schedule Section -->
+      <div class="bg-slate-900 rounded-3xl border border-slate-800 p-6 shadow-card space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-800">
+          <div>
+            <div class="flex items-center gap-2">
+              <i data-lucide="calendar" class="w-5 h-5 text-sky-400"></i>
+              <h3 class="text-lg font-bold text-white">Your Daily Medication Schedule</h3>
+            </div>
+            <p class="text-xs text-slate-400 mt-0.5">Track daily medicine intake schedules and log dosage completions in real time.</p>
+          </div>
+          <span id="schedule-progress-text" class="text-xs font-bold text-sky-400 bg-sky-950 px-3 py-1.5 rounded-xl border border-sky-800">
+            0 of 3 doses taken today
+          </span>
+        </div>
+
+        <!-- Schedule Progress Bar -->
+        <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
+          <div id="schedule-progress-bar" class="bg-gradient-to-r from-sky-500 to-emerald-500 h-2.5 rounded-full transition-all duration-500" style="width: 33%;"></div>
+        </div>
+
+        <!-- Medication Reminders List -->
+        <div id="medication-schedule-list" class="space-y-3">
+          <!-- Rendered dynamically via JS -->
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ==================== 6. CONTACT PAGE VIEW ==================== -->
+    <section id="view-contact" class="page-view hidden space-y-12">
+      
+      <div class="text-center max-w-xl mx-auto space-y-2">
+        <h1 class="text-3xl font-black text-white">Contact Pharmacy Support</h1>
+        <p class="text-xs text-slate-400">We are here to assist with medicine inquiries, prescription verification, order tracking, and refund requests.</p>
+      </div>
+
+      <!-- Support Channels Cards Grid -->
+      <div class="grid sm:grid-cols-3 gap-6">
+        <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-card text-center space-y-3">
+          <div class="w-12 h-12 rounded-2xl bg-sky-950 text-sky-400 border border-sky-800/60 flex items-center justify-center mx-auto">
+            <i data-lucide="phone" class="w-6 h-6"></i>
+          </div>
+          <h3 class="text-sm font-bold text-white">24/7 Phone Helpline</h3>
+          <p class="text-xs text-slate-400">+1 (800) 555-DAYZ (3299)</p>
+          <span class="text-[10px] font-bold text-emerald-300 bg-emerald-950 border border-emerald-800 px-2 py-0.5 rounded-md inline-block">Toll Free</span>
+        </div>
+
+        <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-card text-center space-y-3">
+          <div class="w-12 h-12 rounded-2xl bg-teal-950 text-teal-400 border border-teal-800/60 flex items-center justify-center mx-auto">
+            <i data-lucide="mail" class="w-6 h-6"></i>
+          </div>
+          <h3 class="text-sm font-bold text-white">Pharmacist Email</h3>
+          <p class="text-xs text-slate-400">support@daymes.com</p>
+          <span class="text-[10px] font-bold text-sky-300 bg-sky-950 border border-sky-800 px-2 py-0.5 rounded-md inline-block">Avg reply: 15 mins</span>
+        </div>
+
+        <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-card text-center space-y-3">
+          <div class="w-12 h-12 rounded-2xl bg-emerald-950 text-emerald-400 border border-emerald-800/60 flex items-center justify-center mx-auto">
+            <i data-lucide="map-pin" class="w-6 h-6"></i>
+          </div>
+          <h3 class="text-sm font-bold text-white">Pharmacy Location</h3>
+          <p class="text-xs text-slate-400">450 Medical Center Plaza, Suite 102</p>
+          <span class="text-[10px] font-bold text-slate-300 bg-slate-800 px-2 py-0.5 rounded-md inline-block">Open Mon-Sun 8am-10pm</span>
+        </div>
+      </div>
+
+      <!-- Contact Form & FAQ Grid -->
+      <div class="grid lg:grid-cols-12 gap-8 items-start">
+        
+        <!-- Contact Form -->
+        <div class="lg:col-span-6 bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-card space-y-6">
+          <h2 class="text-lg font-bold text-white">Send Us a Message</h2>
+          <form onsubmit="handleContactSubmit(event)" class="space-y-4">
+            <div>
+              <label class="text-xs font-bold text-slate-300 block mb-1">Your Full Name</label>
+              <input type="text" required placeholder="e.g. Sarah Jenkins" class="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 text-white placeholder-slate-400 rounded-xl text-xs outline-none focus:border-sky-500" />
+            </div>
+
+            <div>
+              <label class="text-xs font-bold text-slate-300 block mb-1">Email Address</label>
+              <input type="email" required placeholder="sarah@example.com" class="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 text-white placeholder-slate-400 rounded-xl text-xs outline-none focus:border-sky-500" />
+            </div>
+
+            <div>
+              <label class="text-xs font-bold text-slate-300 block mb-1">Subject</label>
+              <select class="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 text-white rounded-xl text-xs outline-none focus:border-sky-500 font-medium">
+                <option>Prescription Verification</option>
+                <option>Order Status Inquiry</option>
+                <option>Smart Reorder Refill Request</option>
+                <option>General Pharmacist Question</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="text-xs font-bold text-slate-300 block mb-1">Message</label>
+              <textarea rows="4" required placeholder="Describe your question or medicine inquiry..." class="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 text-white placeholder-slate-400 rounded-xl text-xs outline-none focus:border-sky-500"></textarea>
+            </div>
+
+            <button type="submit" class="w-full py-3 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-xl text-xs shadow-md transition-all">
+              Submit Message
+            </button>
+          </form>
+        </div>
+
+        <!-- FAQ Section -->
+        <div class="lg:col-span-6 bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-card space-y-4">
+          <h2 class="text-lg font-bold text-white mb-4">Frequently Asked Questions</h2>
+          
+          <div class="space-y-3">
+            <div class="border border-slate-800 rounded-2xl p-4 bg-slate-950/40">
+              <button class="faq-toggle w-full flex items-center justify-between text-left text-xs font-bold text-slate-200">
+                <span>How do prescription orders work?</span>
+                <i data-lucide="chevron-down" class="faq-icon w-4 h-4 text-slate-400 transition-transform"></i>
+              </button>
+              <div class="hidden pt-3 text-xs text-slate-400 leading-relaxed">
+                For medicines marked Rx, upload a clear picture of your doctor's prescription at checkout. Our verified pharmacists check and approve it before dispatch.
+              </div>
+            </div>
+
+            <div class="border border-slate-800 rounded-2xl p-4 bg-slate-950/40">
+              <button class="faq-toggle w-full flex items-center justify-between text-left text-xs font-bold text-slate-200">
+                <span>What is the Smart Reordering System?</span>
+                <i data-lucide="chevron-down" class="faq-icon w-4 h-4 text-slate-400 transition-transform"></i>
+              </button>
+              <div class="hidden pt-3 text-xs text-slate-400 leading-relaxed">
+                Smart Reordering automatically tracks your remaining pills based on dosage recommendations and notifies you when it's time to refill with 1-click ordering.
+              </div>
+            </div>
+
+            <div class="border border-slate-800 rounded-2xl p-4 bg-slate-950/40">
+              <button class="faq-toggle w-full flex items-center justify-between text-left text-xs font-bold text-slate-200">
+                <span>How fast is delivery?</span>
+                <i data-lucide="chevron-down" class="faq-icon w-4 h-4 text-slate-400 transition-transform"></i>
+              </button>
+              <div class="hidden pt-3 text-xs text-slate-400 leading-relaxed">
+                Standard delivery arrives within 24-48 hours. Express same-day delivery is available in select areas for orders placed before 2:00 PM.
+              </div>
+            </div>
+
+            <div class="border border-slate-800 rounded-2xl p-4 bg-slate-950/40">
+              <button class="faq-toggle w-full flex items-center justify-between text-left text-xs font-bold text-slate-200">
+                <span>Is payment secure on this website?</span>
+                <i data-lucide="chevron-down" class="faq-icon w-4 h-4 text-slate-400 transition-transform"></i>
+              </button>
+              <div class="hidden pt-3 text-xs text-slate-400 leading-relaxed">
+                This is a prototype application created for college/project demonstration. No real money or payments are processed.
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+
+  <!-- ==================== CART DRAWER ==================== -->
+  <div id="cart-backdrop" onclick="toggleCartDrawer(false)" class="hidden fixed inset-0 modal-backdrop z-50 transition-opacity"></div>
+  <aside id="cart-drawer" class="fixed top-0 right-0 z-50 h-full w-full max-w-md bg-slate-900 border-l border-slate-800 shadow-2xl transform translate-x-full transition-transform duration-300 flex flex-col text-white">
+    <div class="p-5 border-b border-slate-800 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i data-lucide="shopping-bag" class="w-5 h-5 text-sky-400"></i>
+        <h3 class="text-base font-bold text-white">Your Shopping Cart</h3>
+      </div>
+      <button onclick="toggleCartDrawer(false)" class="p-1 text-slate-400 hover:text-white">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+
+    <!-- Cart Items List -->
+    <div id="cart-items-list" class="flex-grow p-5 space-y-3 overflow-y-auto">
+      <!-- Rendered dynamically -->
+    </div>
+
+    <!-- Cart Footer Summary -->
+    <div class="p-5 border-t border-slate-800 bg-slate-950/80 space-y-3">
+      <div class="flex items-center justify-between text-xs font-semibold text-slate-300">
+        <span>Subtotal</span>
+        <span id="cart-subtotal" class="text-white">$0.00</span>
+      </div>
+      <div id="cart-shipping-note" class="text-[11px] text-slate-400 text-center">
+        Add items to calculate shipping
+      </div>
+      <div class="flex items-center justify-between text-base font-extrabold text-white pt-2 border-t border-slate-800">
+        <span>Total Amount</span>
+        <span id="cart-total" class="text-sky-400">$0.00</span>
+      </div>
+
+      <button id="cart-checkout-btn" onclick="openCheckoutModal()" class="w-full py-3.5 bg-sky-600 hover:bg-sky-700 text-white font-extrabold rounded-2xl text-xs shadow-md transition-all">
+        Proceed to Checkout
+      </button>
+    </div>
+  </aside>
+
+
+  <!-- ==================== CHECKOUT MODAL ==================== -->
+  <div id="checkout-modal" class="hidden fixed inset-0 modal-backdrop z-50 flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-slate-900 rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-800 relative space-y-6 my-8 text-white">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-xl bg-sky-950 text-sky-400 flex items-center justify-center font-bold border border-sky-800">
+            <i data-lucide="credit-card" class="w-4 h-4"></i>
+          </div>
+          <h3 class="text-lg font-bold text-white">Demo Checkout</h3>
+        </div>
+        <button onclick="closeCheckoutModal()" class="p-1 text-slate-400 hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form onsubmit="submitCheckoutOrder(event)" class="space-y-5">
+        
+        <!-- Cart Summary Box -->
+        <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
+          <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Order Items</h4>
+          <div id="checkout-items-summary" class="max-h-36 overflow-y-auto space-y-1">
+            <!-- Rendered dynamically -->
+          </div>
+          <div class="pt-2 border-t border-slate-800 text-xs flex justify-between font-semibold text-slate-300">
+            <span>Subtotal: <span id="checkout-subtotal">$0.00</span></span>
+            <span>Shipping: <span id="checkout-shipping">FREE</span></span>
+            <span class="text-sky-400 font-extrabold text-sm">Total: <span id="checkout-grand-total">$0.00</span></span>
+          </div>
+        </div>
+
+        <!-- Optional Rx Prescription Upload Section -->
+        <div id="checkout-rx-upload-section" class="hidden bg-rose-950/60 border border-rose-800/80 rounded-2xl p-4 space-y-2">
+          <div class="flex items-center gap-2 text-rose-300 text-xs font-bold">
+            <i data-lucide="file-text" class="w-4 h-4"></i>
+            <span>Prescription Upload Required for Rx Items</span>
+          </div>
+          <input type="file" accept="image/*,.pdf" class="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-rose-600 file:text-white hover:file:bg-rose-700 cursor-pointer" />
+        </div>
+
+        <!-- Delivery Details -->
+        <div class="space-y-3">
+          <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Delivery Details</h4>
+          <div class="grid sm:grid-cols-2 gap-3">
+            <input id="checkout-name" type="text" required value="Sarah Jenkins" placeholder="Full Name" class="px-3.5 py-2 bg-slate-800 border border-slate-700 text-white placeholder-slate-400 rounded-xl text-xs outline-none focus:border-sky-500 font-medium" />
+            <input id="checkout-phone" type="tel" required value="+1 (555) 234-5678" placeholder="Phone Number" class="px-3.5 py-2 bg-slate-800 border border-slate-700 text-white placeholder-slate-400 rounded-xl text-xs outline-none focus:border-sky-500 font-medium" />
+          </div>
+          <input id="checkout-address" type="text" required value="742 Evergreen Terrace, Springfield, IL 62704" placeholder="Delivery Address" class="w-full px-3.5 py-2 bg-slate-800 border border-slate-700 text-white placeholder-slate-400 rounded-xl text-xs outline-none focus:border-sky-500 font-medium" />
+        </div>
+
+        <!-- Payment Method Choice -->
+        <div class="space-y-3">
+          <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Demo Payment Method</h4>
+          <div class="grid grid-cols-3 gap-2">
+            <label class="border border-slate-800 bg-slate-800/50 p-2.5 rounded-xl flex items-center gap-2 cursor-pointer hover:bg-slate-800 text-xs font-semibold text-slate-200">
+              <input type="radio" name="payment-method" value="Credit Card" checked class="text-sky-600 focus:ring-sky-500" />
+              <span>Card</span>
+            </label>
+            <label class="border border-slate-800 bg-slate-800/50 p-2.5 rounded-xl flex items-center gap-2 cursor-pointer hover:bg-slate-800 text-xs font-semibold text-slate-200">
+              <input type="radio" name="payment-method" value="UPI / Wallet" class="text-sky-600 focus:ring-sky-500" />
+              <span>UPI / Wallet</span>
+            </label>
+            <label class="border border-slate-800 bg-slate-800/50 p-2.5 rounded-xl flex items-center gap-2 cursor-pointer hover:bg-slate-800 text-xs font-semibold text-slate-200">
+              <input type="radio" name="payment-method" value="Cash on Delivery" class="text-sky-600 focus:ring-sky-500" />
+              <span>COD</span>
+            </label>
+          </div>
+        </div>
+
+        <button type="submit" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-2xl text-xs shadow-lg transition-all flex items-center justify-center gap-2">
+          <i data-lucide="check-circle" class="w-4 h-4"></i>
+          <span>Place Order (Demo)</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- ==================== ORDER PLACED SUCCESS MODAL ==================== -->
+  <div id="order-placed-success-modal" class="hidden fixed inset-0 modal-backdrop z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 rounded-3xl max-w-md w-full p-8 shadow-2xl border border-slate-800 text-center space-y-4 text-white">
+      <div class="w-16 h-16 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 flex items-center justify-center mx-auto text-2xl pulse-glow">
+        <i data-lucide="check" class="w-8 h-8 stroke-[3]"></i>
+      </div>
+      <h3 class="text-xl font-black text-white">Order Placed Successfully!</h3>
+      <p class="text-xs text-slate-400">
+        Your demo order has been generated with ID <span id="placed-order-id" class="font-extrabold text-sky-400">#DAY-99999</span> and saved to your Order History.
+      </p>
+      <button onclick="closeOrderPlacedModal()" class="w-full py-3 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-xl text-xs transition-all">
+        View Order Tracking
+      </button>
+    </div>
+  </div>
+
+
+  <!-- ==================== REORDER SUCCESS MODAL ==================== -->
+  <div id="reorder-success-modal" class="hidden fixed inset-0 modal-backdrop z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 rounded-3xl max-w-md w-full p-8 shadow-2xl border border-slate-800 text-center space-y-4 text-white">
+      <div class="w-16 h-16 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 flex items-center justify-center mx-auto text-2xl">
+        <i data-lucide="refresh-cw" class="w-8 h-8"></i>
+      </div>
+      <h3 class="text-xl font-black text-white">Reorder Successful!</h3>
+      <p class="text-xs text-slate-400">
+        Your repeat order <span id="reorder-success-id" class="font-bold text-sky-400">#DAY-89210</span> containing <span id="reorder-success-count" class="font-bold text-slate-200">2 items</span> (<span id="reorder-success-total" class="font-bold text-emerald-400">$14.98</span>) has been submitted.
+      </p>
+      <button onclick="closeReorderModal()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition-all">
+        Go to My Orders
+      </button>
+    </div>
+  </div>
+
+
+  <!-- ==================== 5. AI HEALTHCARE CHATBOT WIDGET ==================== -->
+  <div class="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+    
+    <!-- Floating Chatbot Window -->
+    <div id="chatbot-widget" class="hidden w-80 sm:w-96 bg-slate-900 rounded-3xl shadow-2xl border border-slate-800 overflow-hidden flex flex-col chat-container-animate mb-3" style="height: 520px;">
+      
+      <!-- Chat Header -->
+      <div class="p-4 bg-gradient-to-r from-sky-700 to-teal-700 text-white flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur flex items-center justify-center font-bold border border-white/20">
+            <i data-lucide="bot" class="w-6 h-6 text-teal-200"></i>
+          </div>
+          <div>
+            <h4 class="text-xs font-extrabold leading-tight">DAYMES Assistant</h4>
+            <span class="text-[10px] text-teal-100 flex items-center gap-1 mt-0.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span> Online Healthcare AI
+            </span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-1">
+          <button onclick="clearChatHistory()" title="Clear Chat" class="p-1 text-teal-100 hover:text-white">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+          <button onclick="toggleChatbot()" class="p-1 text-teal-100 hover:text-white">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Disclaimer Warning Bar -->
+      <div class="bg-slate-950 border-b border-slate-800 px-3 py-2 text-[10px] text-slate-300 text-center font-medium leading-tight">
+        DAYMES Assistant provides general healthcare and medicine information. It does not diagnose conditions or prescribe medicines. For personalized medical advice, consult a qualified doctor or pharmacist.
+      </div>
+
+      <!-- Messages History Container -->
+      <div id="chat-messages-container" class="flex-grow p-4 overflow-y-auto space-y-2 bg-slate-950/40">
+        <!-- Rendered dynamically via JS -->
+      </div>
+
+      <!-- Quick Action Prompt Chips -->
+      <div class="p-2 bg-slate-950 border-t border-slate-800 flex gap-1.5 overflow-x-auto scrollbar-none">
+        <button onclick="sendChatMessage('Find a Medicine')" class="px-2.5 py-1 bg-slate-800 border border-slate-700 text-slate-200 rounded-full text-[11px] font-semibold whitespace-nowrap hover:bg-sky-600 hover:text-white transition-all flex items-center gap-1">🔎 Find a Medicine</button>
+        <button onclick="sendChatMessage('Medicine Information')" class="px-2.5 py-1 bg-slate-800 border border-slate-700 text-slate-200 rounded-full text-[11px] font-semibold whitespace-nowrap hover:bg-sky-600 hover:text-white transition-all flex items-center gap-1">💊 Medicine Information</button>
+        <button onclick="sendChatMessage('Reorder Medicine')" class="px-2.5 py-1 bg-slate-800 border border-slate-700 text-slate-200 rounded-full text-[11px] font-semibold whitespace-nowrap hover:bg-sky-600 hover:text-white transition-all flex items-center gap-1">🔄 Reorder Medicine</button>
+        <button onclick="sendChatMessage('My Orders')" class="px-2.5 py-1 bg-slate-800 border border-slate-700 text-slate-200 rounded-full text-[11px] font-semibold whitespace-nowrap hover:bg-sky-600 hover:text-white transition-all flex items-center gap-1">📋 My Orders</button>
+        <button onclick="sendChatMessage('Healthcare Guidance')" class="px-2.5 py-1 bg-slate-800 border border-slate-700 text-slate-200 rounded-full text-[11px] font-semibold whitespace-nowrap hover:bg-sky-600 hover:text-white transition-all flex items-center gap-1">🩺 Healthcare Guidance</button>
+      </div>
+
+      <!-- Typing Indicator -->
+      <div id="chat-typing-indicator" class="hidden px-4 py-1.5 bg-slate-900 text-[11px] text-slate-400 flex items-center gap-1.5">
+        <span class="font-medium">Care Assistant is typing</span>
+        <div class="flex gap-1">
+          <span class="w-1.5 h-1.5 bg-sky-400 rounded-full typing-dot"></span>
+          <span class="w-1.5 h-1.5 bg-sky-400 rounded-full typing-dot"></span>
+          <span class="w-1.5 h-1.5 bg-sky-400 rounded-full typing-dot"></span>
+        </div>
+      </div>
+
+      <!-- Chat Input Field -->
+      <div class="p-3 bg-slate-950 border-t border-slate-800 flex items-center gap-2">
+        <input id="chat-input-field" type="text" onkeydown="if(event.key==='Enter') sendChatMessage()" placeholder="Ask about medicines or refills..." class="flex-grow px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs outline-none text-white placeholder-slate-400 focus:border-sky-500 focus:bg-slate-900" />
+        <button onclick="sendChatMessage()" class="p-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl shadow-sm transition-all">
+          <i data-lucide="send" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Floating Chat Trigger Button -->
+    <button onclick="toggleChatbot()" class="group relative px-4 py-3 bg-gradient-to-r from-sky-600 to-teal-600 hover:from-sky-700 hover:to-teal-700 text-white font-extrabold rounded-full shadow-2xl flex items-center gap-2 transition-all transform hover:scale-105 border border-sky-400/30">
+      <i data-lucide="message-square font-bold" class="w-5 h-5"></i>
+      <span class="text-xs">DAYMES Assistant</span>
+      <span id="chatbot-unread-dot" class="w-2.5 h-2.5 bg-teal-300 rounded-full animate-ping absolute top-0 right-0"></span>
+    </button>
+
+  </div>
+
+
+  <!-- FOOTER -->
+  <footer class="mt-20 bg-slate-950 text-slate-400 text-xs border-t border-slate-900">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div class="space-y-3">
+        <div class="flex items-center gap-2 text-white font-black text-lg">
+          <i data-lucide="cross" class="w-5 h-5 text-sky-400"></i>
+          <span>DAYMES</span>
+        </div>
+        <p class="text-slate-400 text-xs leading-relaxed">
+          Modern pharmacy and healthcare support platform streamlining prescriptions, refills, and medication reminders.
+        </p>
+      </div>
+
+      <div>
+        <h4 class="text-white font-bold mb-3 text-xs uppercase tracking-wider">Quick Navigation</h4>
+        <ul class="space-y-2">
+          <li><button onclick="navigateTo('home')" class="hover:text-white">Home Portal</button></li>
+          <li><button onclick="navigateTo('medicines')" class="hover:text-white">Medicines Catalog</button></li>
+          <li><button onclick="navigateTo('reorder')" class="hover:text-white">Smart Refill System</button></li>
+          <li><button onclick="navigateTo('orders')" class="hover:text-white">Order History</button></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4 class="text-white font-bold mb-3 text-xs uppercase tracking-wider">Healthcare Services</h4>
+        <ul class="space-y-2">
+          <li><button onclick="navigateTo('healthcare')" class="hover:text-white">Medication Schedule</button></li>
+          <li><button onclick="toggleChatbot()" class="hover:text-white">DAYMES Assistant</button></li>
+          <li><button onclick="navigateTo('contact')" class="hover:text-white">Pharmacist Consultation</button></li>
+          <li><button onclick="navigateTo('medicines')" class="hover:text-white">Prescription Upload</button></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4 class="text-white font-bold mb-3 text-xs uppercase tracking-wider">Project Notice</h4>
+        <p class="text-slate-400 text-[11px] leading-relaxed">
+          This project is a demonstration website prototype. No actual prescription dispenses, payment transactions, or medical advice are executed.
+        </p>
+        <p class="text-slate-500 text-[10px] mt-2">© 2026 DAYMES. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- ==================== SIGN IN MODAL ==================== -->
+  <div id="signin-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+    <div class="bg-slate-900 border border-slate-700 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
+      <!-- Header -->
+      <div class="px-8 pt-8 pb-6 border-b border-slate-800">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-sky-500 to-teal-500 flex items-center justify-center shadow-md">
+              <i data-lucide="log-in" class="w-5 h-5 text-white"></i>
+            </div>
+            <div>
+              <h2 class="text-lg font-black text-white">Welcome Back</h2>
+              <p class="text-[11px] text-slate-400 font-medium">Sign in to your DAYMES account</p>
+            </div>
+          </div>
+          <button onclick="closeSignInModal()" class="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-all">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Form -->
+      <div class="px-8 py-6">
+        <form id="signin-form" class="space-y-4" novalidate>
+          <!-- Email -->
+          <div class="space-y-1.5">
+            <label class="text-xs font-bold text-slate-300">Email Address</label>
+            <div class="relative">
+              <i data-lucide="mail" class="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2"></i>
+              <input id="signin-email" type="email" required placeholder="you@example.com"
+                class="w-full pl-9 pr-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:border-sky-500 focus:ring-2 focus:ring-sky-950 outline-none transition-all" />
+            </div>
+          </div>
+
+          <!-- Password -->
+          <div class="space-y-1.5">
+            <label class="text-xs font-bold text-slate-300">Password</label>
+            <div class="relative">
+              <i data-lucide="lock" class="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2"></i>
+              <input id="signin-password" type="password" required placeholder="••••••••"
+                class="w-full pl-9 pr-10 py-3 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:border-sky-500 focus:ring-2 focus:ring-sky-950 outline-none transition-all" />
+              <button type="button" id="signin-eye-btn" onclick="togglePasswordVisibility('signin-password','signin-eye-btn')"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors">
+                <i data-lucide="eye" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Remember Me -->
+          <div class="flex items-center gap-2">
+            <input type="checkbox" id="signin-remember" class="w-4 h-4 rounded text-sky-600 focus:ring-sky-500 border-slate-600 bg-slate-800 cursor-pointer" />
+            <label for="signin-remember" class="text-xs text-slate-400 cursor-pointer">Remember me on this device</label>
+          </div>
+
+          <!-- Error -->
+          <p id="signin-error" class="text-xs text-rose-400 font-semibold min-h-[1rem]"></p>
+
+          <!-- Submit -->
+          <button id="signin-submit-btn" type="submit"
+            class="w-full py-3 bg-gradient-to-r from-sky-500 to-teal-500 hover:from-sky-600 hover:to-teal-600 text-white font-extrabold rounded-xl text-sm shadow-lg transition-all">
+            Sign In
+          </button>
+        </form>
+
+        <!-- Divider -->
+        <div class="flex items-center gap-3 my-5">
+          <div class="flex-1 h-px bg-slate-800"></div>
+          <span class="text-[11px] text-slate-500 font-medium">or</span>
+          <div class="flex-1 h-px bg-slate-800"></div>
+        </div>
+
+        <p class="text-center text-xs text-slate-400">
+          Don't have an account?
+          <button onclick="switchToSignUp()" class="text-sky-400 font-bold hover:text-sky-300 transition-colors ml-1">Create an account →</button>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SIGN UP MODAL ==================== -->
+  <div id="signup-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+    <div class="bg-slate-900 border border-slate-700 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden max-h-[95vh] overflow-y-auto">
+      <!-- Header -->
+      <div class="px-8 pt-8 pb-6 border-b border-slate-800 sticky top-0 bg-slate-900 z-10">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-md">
+              <i data-lucide="user-plus" class="w-5 h-5 text-white"></i>
+            </div>
+            <div>
+              <h2 class="text-lg font-black text-white">Create Account</h2>
+              <p class="text-[11px] text-slate-400 font-medium">Join DAYMES — it only takes a moment</p>
+            </div>
+          </div>
+          <button onclick="closeSignUpModal()" class="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-all">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Form -->
+      <div class="px-8 py-6">
+        <form id="signup-form" class="space-y-4" novalidate>
+          <!-- Full Name -->
+          <div class="space-y-1.5">
+            <label class="text-xs font-bold text-slate-300">Full Name</label>
+            <div class="relative">
+              <i data-lucide="user" class="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2"></i>
+              <input id="signup-name" type="text" required placeholder="Jane Doe"
+                class="w-full pl-9 pr-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-950 outline-none transition-all" />
+            </div>
+          </div>
+
+          <!-- Email -->
+          <div class="space-y-1.5">
+            <label class="text-xs font-bold text-slate-300">Email Address</label>
+            <div class="relative">
+              <i data-lucide="mail" class="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2"></i>
+              <input id="signup-email" type="email" required placeholder="you@example.com"
+                class="w-full pl-9 pr-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-950 outline-none transition-all" />
+            </div>
+          </div>
+
+          <!-- Mobile -->
+          <div class="space-y-1.5">
+            <label class="text-xs font-bold text-slate-300">Mobile Number</label>
+            <div class="relative">
+              <i data-lucide="phone" class="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2"></i>
+              <input id="signup-mobile" type="tel" placeholder="+1 (555) 000-0000"
+                class="w-full pl-9 pr-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-950 outline-none transition-all" />
+            </div>
+          </div>
+
+          <!-- Password -->
+          <div class="space-y-1.5">
+            <label class="text-xs font-bold text-slate-300">Password <span class="text-slate-500 font-normal">(min. 8 characters)</span></label>
+            <div class="relative">
+              <i data-lucide="lock" class="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2"></i>
+              <input id="signup-password" type="password" required placeholder="••••••••"
+                class="w-full pl-9 pr-10 py-3 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-950 outline-none transition-all" />
+              <button type="button" id="signup-eye-btn" onclick="togglePasswordVisibility('signup-password','signup-eye-btn')"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors">
+                <i data-lucide="eye" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Confirm Password -->
+          <div class="space-y-1.5">
+            <label class="text-xs font-bold text-slate-300">Confirm Password</label>
+            <div class="relative">
+              <i data-lucide="lock" class="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2"></i>
+              <input id="signup-confirm-password" type="password" required placeholder="••••••••"
+                class="w-full pl-9 pr-10 py-3 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-950 outline-none transition-all" />
+              <button type="button" id="signup-confirm-eye-btn" onclick="togglePasswordVisibility('signup-confirm-password','signup-confirm-eye-btn')"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors">
+                <i data-lucide="eye" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Error -->
+          <p id="signup-error" class="text-xs text-rose-400 font-semibold min-h-[1rem]"></p>
+
+          <!-- Submit -->
+          <button id="signup-submit-btn" type="submit"
+            class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-extrabold rounded-xl text-sm shadow-lg transition-all">
+            Create Account
+          </button>
+
+          <p class="text-[10px] text-center text-slate-500 leading-relaxed">
+            By creating an account, you agree that all medicine orders require valid prescriptions where indicated. DAYMES does not store or display your password.
+          </p>
+        </form>
+
+        <div class="flex items-center gap-3 my-4">
+          <div class="flex-1 h-px bg-slate-800"></div>
+          <span class="text-[11px] text-slate-500 font-medium">or</span>
+          <div class="flex-1 h-px bg-slate-800"></div>
+        </div>
+
+        <p class="text-center text-xs text-slate-400">
+          Already have an account?
+          <button onclick="switchToSignIn()" class="text-sky-400 font-bold hover:text-sky-300 transition-colors ml-1">Sign in →</button>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== LOGIN REQUIRED GATE MODAL ==================== -->
+  <div id="auth-gate-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+    <div class="bg-slate-900 border border-slate-700 rounded-3xl shadow-2xl w-full max-w-sm p-8 text-center space-y-5">
+      <div class="w-16 h-16 rounded-full bg-sky-950 border border-sky-800 flex items-center justify-center mx-auto">
+        <i data-lucide="lock" class="w-8 h-8 text-sky-400"></i>
+      </div>
+      <div>
+        <h3 class="text-lg font-black text-white">Sign In Required</h3>
+        <p class="text-sm text-slate-400 mt-1.5">Please sign in to continue. This section is available to registered DAYMES members.</p>
+      </div>
+      <div class="flex flex-col gap-3 pt-1">
+        <button id="auth-gate-signin-btn" onclick="closeAuthGate(); openSignInModal();" class="w-full py-3 bg-sky-600 hover:bg-sky-700 text-white font-extrabold rounded-xl text-sm transition-all">
+          Sign In
+        </button>
+        <button onclick="closeAuthGate(); switchToSignUp();" class="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold rounded-xl text-sm transition-all">
+          Create an Account
+        </button>
+        <button onclick="closeAuthGate()" class="text-xs text-slate-500 hover:text-slate-300 py-1 transition-colors">
+          Maybe later
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- JS SCRIPTS -->
+  <script src="js/data.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
