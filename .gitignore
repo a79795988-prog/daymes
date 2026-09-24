@@ -1,0 +1,33 @@
+# DAYMES — Project Ignore Rules
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# IDE directories
+.vscode/
+.idea/
+*.code-workspace
+
+# Logs
+*.log
+npm-debug.log*
+
+# Temporary files
+*.tmp
+*.swp
+*~
+
+# Local server scripts
+start-server.sh
+
+# Java / Maven / Spring Boot
+target/
+*.class
+*.jar
+*.war
+.settings/
+.classpath
+.project
+.idea/
