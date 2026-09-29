@@ -1,73 +1,105 @@
 'use client';
 
 import React from 'react';
-import { Pill, ShieldCheck, Stethoscope, Clock, Sparkles } from 'lucide-react';
+import { ShieldCheck, ArrowRight, RefreshCw, Activity } from 'lucide-react';
 
 interface HeroProps {
-  onOpenDoctor: () => void;
-  onOpenEmergency: () => void;
+  onOrderMedicines: () => void;
+  onReorder: () => void;
 }
 
-export const Hero: React.FC<HeroProps> = ({ onOpenDoctor, onOpenEmergency }) => {
+export const Hero: React.FC<HeroProps> = ({ onOrderMedicines, onReorder }) => {
   return (
-    <div className="relative overflow-hidden bg-slate-950 py-12 sm:py-16 border-b border-slate-800/80">
-      {/* Background glow effects */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
+    <div className="relative bg-gradient-to-br from-[#0c2336] via-[#091522] to-[#0a273b] rounded-3xl p-8 sm:p-12 lg:p-14 text-white overflow-hidden shadow-2xl border border-sky-900/30">
+      {/* Background medical glow */}
+      <div className="absolute -right-16 -bottom-16 w-96 h-96 bg-sky-500/15 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute right-40 top-0 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="text-center max-w-3xl mx-auto space-y-4">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-sky-950/70 border border-sky-800/60 rounded-full text-xs font-bold text-sky-400">
-            <Sparkles className="w-3.5 h-3.5 text-sky-400 animate-pulse" />
-            <span>Smart Pharmacy • Verified Prescriptions • 24/7 Care</span>
+      <div className="grid lg:grid-cols-12 gap-8 items-center relative z-10">
+        {/* Left Column */}
+        <div className="lg:col-span-7 space-y-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur border border-white/20 text-xs font-semibold text-sky-200">
+            <ShieldCheck className="w-4 h-4 text-teal-400" />
+            <span>Licensed Online Pharmacy & Smart Healthcare Portal</span>
           </div>
 
-          <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
-            Your Health, Prescriptions & Doctors — <span className="bg-gradient-to-r from-sky-400 to-teal-300 bg-clip-text text-transparent">In One Trusted Place</span>
+          <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-white leading-tight">
+            Your Medicines, <br className="hidden sm:inline" />
+            <span className="bg-gradient-to-r from-sky-400 via-teal-300 to-emerald-400 bg-clip-text text-transparent">
+              Simplified.
+            </span>
           </h1>
 
-          <p className="text-sm sm:text-base text-slate-400 leading-relaxed max-w-2xl mx-auto">
-            Order authentic medicines, schedule teleconsultations with licensed physicians, and track daily medications with intelligent reminders.
+          <p className="text-sm sm:text-base text-slate-300 max-w-xl font-normal leading-relaxed">
+            Order medicines, manage refills, track daily medication schedules, and get instant healthcare guidance from our DAYMES Assistant in one trusted place.
           </p>
 
-          {/* Quick Action Badges */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 max-w-4xl mx-auto">
-            <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl text-left hover:border-sky-500/50 transition-all">
-              <div className="w-9 h-9 rounded-xl bg-sky-500/10 text-sky-400 flex items-center justify-center mb-2.5">
-                <Pill className="w-5 h-5" />
+          {/* Action Buttons */}
+          <div className="flex flex-wrap items-center gap-4 pt-2">
+            <button
+              onClick={onOrderMedicines}
+              className="px-7 py-3.5 bg-gradient-to-r from-sky-500 to-teal-500 hover:from-sky-600 hover:to-teal-600 text-slate-950 font-black rounded-2xl text-xs sm:text-sm shadow-lg shadow-sky-500/25 transition-all flex items-center gap-2 active:scale-95"
+            >
+              <span>Order Medicines</span>
+              <ArrowRight className="w-4 h-4 stroke-[2.5]" />
+            </button>
+
+            <button
+              onClick={onReorder}
+              className="px-7 py-3.5 bg-white/10 hover:bg-white/20 text-white font-extrabold rounded-2xl text-xs sm:text-sm border border-white/20 backdrop-blur transition-all flex items-center gap-2 active:scale-95"
+            >
+              <RefreshCw className="w-4 h-4 text-emerald-400" />
+              <span>Reorder Now</span>
+            </button>
+          </div>
+
+          {/* Stats Bar */}
+          <div className="pt-6 border-t border-white/10 grid grid-cols-3 gap-4">
+            <div>
+              <span className="text-xl sm:text-2xl font-black text-white">100%</span>
+              <p className="text-[11px] text-slate-400">Verified Products</p>
+            </div>
+            <div>
+              <span className="text-xl sm:text-2xl font-black text-emerald-400">24/7</span>
+              <p className="text-[11px] text-slate-400">Care Assistant Support</p>
+            </div>
+            <div>
+              <span className="text-xl sm:text-2xl font-black text-sky-400">Express</span>
+              <p className="text-[11px] text-slate-400">Prescription Delivery</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Graphic Card */}
+        <div className="lg:col-span-5 flex justify-center">
+          <div className="relative w-full max-w-sm bg-slate-900/90 backdrop-blur-xl border border-slate-700/80 p-6 rounded-3xl shadow-2xl text-white space-y-4">
+            <div className="flex items-center gap-3 pb-3 border-b border-slate-800">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
+                <Activity className="w-5 h-5" />
               </div>
-              <h4 className="text-xs font-bold text-white">Genuine Medicine</h4>
-              <p className="text-[11px] text-slate-400 mt-0.5">100% verified pharmacy</p>
+              <div>
+                <h4 className="text-xs font-bold text-white">DAYMES Care Portal</h4>
+                <p className="text-[10px] text-slate-400">Live Refill & Order Health Status</p>
+              </div>
             </div>
 
-            <button
-              onClick={onOpenDoctor}
-              className="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl text-left hover:border-teal-500/50 transition-all group"
-            >
-              <div className="w-9 h-9 rounded-xl bg-teal-500/10 text-teal-400 flex items-center justify-center mb-2.5 group-hover:scale-110 transition-transform">
-                <Stethoscope className="w-5 h-5" />
+            <div className="space-y-2.5">
+              <div className="bg-slate-800/80 p-3 rounded-xl flex items-center justify-between text-xs border border-slate-700/60">
+                <span className="font-semibold text-slate-200">Paracetamol 500mg</span>
+                <span className="px-2 py-0.5 text-[10px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-md">
+                  Refill Ready
+                </span>
               </div>
-              <h4 className="text-xs font-bold text-white">Doctor Consult</h4>
-              <p className="text-[11px] text-slate-400 mt-0.5">Book teleconsultation</p>
-            </button>
+              <div className="bg-slate-800/80 p-3 rounded-xl flex items-center justify-between text-xs border border-slate-700/60">
+                <span className="font-semibold text-slate-200">Vitamin C Daily</span>
+                <span className="px-2 py-0.5 text-[10px] font-extrabold bg-sky-500/20 text-sky-300 border border-sky-500/30 rounded-md">
+                  On Schedule
+                </span>
+              </div>
+            </div>
 
-            <button
-              onClick={onOpenEmergency}
-              className="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl text-left hover:border-rose-500/50 transition-all group"
-            >
-              <div className="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center mb-2.5 group-hover:scale-110 transition-transform">
-                <Clock className="w-5 h-5" />
-              </div>
-              <h4 className="text-xs font-bold text-white">Emergency ER</h4>
-              <p className="text-[11px] text-slate-400 mt-0.5">24/7 Trauma response</p>
-            </button>
-
-            <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl text-left hover:border-emerald-500/50 transition-all">
-              <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center mb-2.5">
-                <ShieldCheck className="w-5 h-5" />
-              </div>
-              <h4 className="text-xs font-bold text-white">Rx Verification</h4>
-              <p className="text-[11px] text-slate-400 mt-0.5">Pharmacist reviewed</p>
+            <div className="pt-2 text-center">
+              <span className="text-[11px] text-slate-400 font-medium">Over 25,000+ satisfied healthcare orders delivered</span>
             </div>
           </div>
         </div>
