@@ -318,6 +318,8 @@ export default function HomePage() {
         onToggle={() => setIsAssistantOpen(!isAssistantOpen)}
         onNavigateMedicines={() => setActiveTab('medicines')}
         onNavigateReorder={() => setActiveTab('reorder')}
+        onAddToCart={handleAddToCart}
+        onOpenDoctor={() => setIsDoctorOpen(true)}
       />
 
       {/* Modals & Drawers */}

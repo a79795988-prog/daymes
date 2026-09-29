@@ -31,6 +31,23 @@ export const CATEGORIES = [
 
 export const MEDICINES: MedicineItem[] = [
   {
+    id: 'med-000',
+    name: 'Paracetamol 500mg',
+    brand: 'Panadol / Crocin • GSK',
+    category: 'Pain Relief',
+    dosage: '500mg Tablet (20 count)',
+    price: 6.99,
+    originalPrice: 9.50,
+    rating: 4.9,
+    reviewsCount: 420,
+    requiresRx: false,
+    image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&h=300&q=80',
+    stock: 150,
+    description: 'First-line fast-acting fever reducer and mild-to-moderate pain reliever for headaches, body aches, toothaches, and viral fevers.',
+    composition: 'Paracetamol / Acetaminophen 500mg',
+    instructions: 'Take 1 to 2 tablets every 4 to 6 hours as needed with water. Do not exceed 8 tablets (4,000mg) in 24 hours.',
+  },
+  {
     id: 'med-001',
     name: 'Amoxicillin 500mg',
     brand: 'Amoxil • GlaxoSmithKline',

@@ -1,13 +1,25 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, Bot, X, Trash2, Send, Sparkles, User, ShieldAlert } from 'lucide-react';
+import { MessageSquare, Bot, X, Trash2, Send, Sparkles, User, ShoppingBag, Plus, Stethoscope } from 'lucide-react';
+import { MedicineItem, MEDICINES } from '@/lib/data';
+import { formatPrice } from '@/lib/utils';
+
+interface SuggestedMed {
+  id: string;
+  name: string;
+  dosage: string;
+  price: number;
+  requiresRx: boolean;
+  reason: string;
+}
 
 interface ChatMessage {
   id: string;
   sender: 'bot' | 'user';
   text: string;
   time: string;
+  suggestedMedicines?: SuggestedMed[];
 }
 
 interface ChatbotWidgetProps {
@@ -15,6 +27,8 @@ interface ChatbotWidgetProps {
   onToggle: () => void;
   onNavigateMedicines: () => void;
   onNavigateReorder: () => void;
+  onAddToCart: (medicine: MedicineItem) => void;
+  onOpenDoctor: () => void;
 }
 
 export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({
@@ -22,17 +36,26 @@ export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({
   onToggle,
   onNavigateMedicines,
   onNavigateReorder,
+  onAddToCart,
+  onOpenDoctor,
 }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'welcome',
       sender: 'bot',
-      text: 'Hello! I am your DAYMES Healthcare Assistant 🩺. How can I assist you today? You can ask about medicines, refill your prescriptions, check order status, or get health guidance.',
+      text: 'Hello! I am your DAYMES Healthcare AI Assistant 🩺.\n\nTell me your illness or symptoms (e.g., "I have fever", "headache", "cold & cough"), and I will suggest the appropriate verified medicines, correct adult dosages, and health precautions.',
       time: 'Just now',
     },
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [quickPrompts, setQuickPrompts] = useState<string[]>([
+    'I have fever',
+    'Medicine for headache',
+    'Allergy & cold',
+    'Cough & sore throat',
+    'Smart Reorder',
+  ]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -43,39 +66,14 @@ export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({
     if (isOpen) scrollToBottom();
   }, [messages, isOpen, isTyping]);
 
-  const generateBotResponse = (query: string): string => {
-    const q = query.toLowerCase();
-
-    if (q.includes('amoxicillin')) {
-      return 'Amoxicillin 500mg is a broad-spectrum penicillin antibiotic prescribed for bacterial infections. Recommended dosage is 1 capsule three times daily every 8 hours with plenty of water. A doctor prescription (Rx) is required.';
-    }
-    if (q.includes('atorvastatin') || q.includes('cholesterol') || q.includes('lipitor')) {
-      return 'Atorvastatin 20mg (Lipitor) lowers LDL cholesterol and reduces cardiac risks. It is taken once daily in the evening, with or without food. Avoid grapefruit while on statin therapy.';
-    }
-    if (q.includes('metformin') || q.includes('diabetes')) {
-      return 'Metformin HCl 500mg is used for type 2 diabetes management. To avoid stomach upset, take it with morning and evening meals.';
-    }
-    if (q.includes('ibuprofen') || q.includes('pain') || q.includes('headache')) {
-      return 'Ibuprofen 400mg is an over-the-counter NSAID for pain and fever relief. Take 1 tablet every 4–6 hours after food. Do not exceed 3 tablets in 24 hours.';
-    }
-    if (q.includes('reorder') || q.includes('refill')) {
-      return 'You can easily reorder routine medications in our Smart Reorder section. Prescriptions with active doctor approval can be refilled in 1 click!';
-    }
-    if (q.includes('order') || q.includes('status') || q.includes('track')) {
-      return 'Orders are packed with temperature-controlled packaging and dispatch within 24 hours. You can view real-time delivery tracking in your "My Orders" tab.';
-    }
-    if (q.includes('emergency') || q.includes('urgent') || q.includes('hospital')) {
-      return '🚨 For medical emergencies, call 911 or 112 immediately. You can also click the Emergency ER button on our platform to find the nearest 24/7 trauma centers.';
-    }
-    if (q.includes('find') || q.includes('search') || q.includes('medicine')) {
-      return 'You can browse our complete pharmaceutical inventory in the "Medicines" tab, filter by therapeutic category, or search directly from the header.';
-    }
-    return `Thank you for your question about "${query}". DAYMES offers genuine pharmacy delivery, prescription verification, and doctor teleconsultations. Let me know if you would like me to guide you to our Medicines catalog or Smart Reorder portal!`;
-  };
-
-  const handleSend = (textToSend?: string) => {
+  const handleSend = async (textToSend?: string) => {
     const messageText = textToSend || input;
     if (!messageText.trim()) return;
+
+    if (messageText.includes('Doctor Consult')) {
+      onOpenDoctor();
+      return;
+    }
 
     const userMsg: ChatMessage = {
       id: 'usr-' + Date.now(),
@@ -88,17 +86,58 @@ export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({
     if (!textToSend) setInput('');
     setIsTyping(true);
 
-    setTimeout(() => {
-      const botReplyText = generateBotResponse(messageText);
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: messageText }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const botMsg: ChatMessage = {
+          id: 'bot-' + Date.now(),
+          sender: 'bot',
+          text: data.text || 'Here is what I found for your health inquiry.',
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          suggestedMedicines: data.suggestedMedicines || [],
+        };
+        setMessages((prev) => [...prev, botMsg]);
+        if (data.quickPrompts && data.quickPrompts.length > 0) {
+          setQuickPrompts(data.quickPrompts);
+        }
+      } else {
+        throw new Error('API request failed');
+      }
+    } catch {
+      // Fallback response
       const botMsg: ChatMessage = {
         id: 'bot-' + Date.now(),
         sender: 'bot',
-        text: botReplyText,
+        text: 'For fever, **Paracetamol 500mg** is the recommended first-line antipyretic medicine. Take 1 tablet every 4–6 hours as needed with water. Rest and stay hydrated.',
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        suggestedMedicines: [
+          {
+            id: 'med-000',
+            name: 'Paracetamol 500mg',
+            dosage: '500mg Tablet (20 count)',
+            price: 6.99,
+            requiresRx: false,
+            reason: 'Fast-acting fever reducer and mild-to-moderate pain reliever',
+          },
+        ],
       };
       setMessages((prev) => [...prev, botMsg]);
+    } finally {
       setIsTyping(false);
-    }, 800);
+    }
+  };
+
+  const handleAddMedToCart = (medId: string) => {
+    const med = MEDICINES.find((m) => m.id === medId);
+    if (med) {
+      onAddToCart(med);
+    }
   };
 
   const clearChat = () => {
@@ -106,25 +145,20 @@ export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({
       {
         id: 'welcome-cleared',
         sender: 'bot',
-        text: 'Chat history cleared. How can I assist you next? 🩺',
+        text: 'Chat history cleared. Tell me your symptom (e.g. "I have fever") to receive medication suggestions! 🩺',
         time: 'Just now',
       },
     ]);
   };
 
-  const quickPrompts = [
-    '🔎 Find a Medicine',
-    '💊 Medicine Information',
-    '🔄 Reorder Medicine',
-    '📋 My Orders',
-    '🩺 Healthcare Guidance',
-  ];
-
   return (
     <div className="fixed bottom-6 right-6 z-[60] flex flex-col items-end">
       {/* Chat Window */}
       {isOpen && (
-        <div className="w-[340px] sm:w-[380px] bg-slate-900 rounded-3xl shadow-2xl border border-slate-700/80 overflow-hidden flex flex-col mb-4 animate-in slide-in-from-bottom-5 duration-200" style={{ height: '520px' }}>
+        <div
+          className="w-[340px] sm:w-[420px] bg-slate-900 rounded-3xl shadow-2xl border border-slate-700/80 overflow-hidden flex flex-col mb-4 animate-in slide-in-from-bottom-5 duration-200"
+          style={{ height: '560px' }}
+        >
           {/* Header */}
           <div className="p-4 bg-gradient-to-r from-sky-700 to-teal-700 text-white flex items-center justify-between shadow-md">
             <div className="flex items-center gap-2.5">
@@ -162,7 +196,7 @@ export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({
 
           {/* Disclaimer Banner */}
           <div className="bg-slate-950 border-b border-slate-800 px-3 py-2 text-[10px] text-slate-300 text-center font-medium leading-tight">
-            DAYMES Assistant provides verified health & pharmacy information. For emergency diagnosis, always consult a certified physician.
+            DAYMES AI provides verified healthcare & pharmacy guidance. For emergency diagnosis, always consult a certified physician.
           </div>
 
           {/* Messages Stream */}
@@ -179,18 +213,54 @@ export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({
                     <Bot className="w-3.5 h-3.5" />
                   </div>
                 )}
+
                 <div
-                  className={`max-w-[78%] p-3 rounded-2xl leading-relaxed ${
+                  className={`max-w-[85%] p-3.5 rounded-2xl leading-relaxed space-y-2.5 ${
                     msg.sender === 'user'
                       ? 'bg-gradient-to-r from-sky-600 to-teal-600 text-white rounded-tr-none shadow-md'
-                      : 'bg-slate-800/90 text-slate-200 border border-slate-700/60 rounded-tl-none shadow-sm'
+                      : 'bg-slate-800/95 text-slate-200 border border-slate-700/60 rounded-tl-none shadow-sm'
                   }`}
                 >
-                  <p>{msg.text}</p>
-                  <span className="block text-[9px] text-slate-400 text-right mt-1 opacity-70">
+                  <div className="whitespace-pre-line text-xs font-normal">
+                    {msg.text}
+                  </div>
+
+                  {/* Render Recommended Medicines Cards */}
+                  {msg.suggestedMedicines && msg.suggestedMedicines.length > 0 && (
+                    <div className="space-y-2 pt-1 border-t border-slate-700/60">
+                      <p className="text-[10px] font-extrabold text-teal-300 uppercase tracking-wider">
+                        💊 Recommended Medications:
+                      </p>
+                      {msg.suggestedMedicines.map((med) => (
+                        <div
+                          key={med.id}
+                          className="p-2.5 bg-slate-900/90 border border-slate-700 rounded-xl flex items-center justify-between gap-2 shadow-sm"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <h5 className="font-bold text-white text-xs truncate">{med.name}</h5>
+                            <p className="text-[10px] text-slate-400 truncate">{med.reason}</p>
+                            <span className="text-[11px] font-extrabold text-teal-400">
+                              {formatPrice(med.price)}
+                            </span>
+                          </div>
+
+                          <button
+                            onClick={() => handleAddMedToCart(med.id)}
+                            className="px-2.5 py-1.5 bg-teal-500 hover:bg-teal-400 text-slate-950 font-black rounded-lg text-[10px] flex items-center gap-1 shadow-md transition-all active:scale-95 flex-shrink-0"
+                          >
+                            <Plus className="w-3 h-3 stroke-[3]" />
+                            <span>Add</span>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <span className="block text-[9px] text-slate-400 text-right opacity-70">
                     {msg.time}
                   </span>
                 </div>
+
                 {msg.sender === 'user' && (
                   <div className="w-6 h-6 rounded-full bg-sky-500/20 text-sky-400 border border-sky-500/30 flex items-center justify-center flex-shrink-0 mt-0.5">
                     <User className="w-3.5 h-3.5" />
@@ -200,9 +270,9 @@ export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({
             ))}
 
             {isTyping && (
-              <div className="flex gap-2 items-center text-[11px] text-slate-400 bg-slate-900/60 border border-slate-800 p-2 rounded-xl w-max">
-                <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-ping" />
-                <span>DAYMES Assistant is typing…</span>
+              <div className="flex gap-2 items-center text-[11px] text-slate-400 bg-slate-900/80 border border-slate-800 p-2.5 rounded-xl w-max">
+                <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-ping" />
+                <span>DAYMES Assistant is analyzing symptoms & medicines…</span>
               </div>
             )}
             <div ref={messagesEndRef} />
@@ -214,7 +284,7 @@ export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({
               <button
                 key={prompt}
                 onClick={() => handleSend(prompt)}
-                className="px-2.5 py-1 bg-slate-800/90 border border-slate-700 text-slate-200 rounded-full text-[10px] font-semibold whitespace-nowrap hover:bg-sky-500 hover:text-slate-950 transition-all flex items-center gap-1 shadow-sm"
+                className="px-2.5 py-1 bg-slate-800/90 border border-slate-700 text-slate-200 rounded-full text-[10px] font-semibold whitespace-nowrap hover:bg-teal-500 hover:text-slate-950 transition-all flex items-center gap-1 shadow-sm"
               >
                 {prompt}
               </button>
@@ -228,12 +298,12 @@ export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-              placeholder="Ask about medicines or refills..."
-              className="flex-1 px-3 py-2 bg-slate-800/90 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:border-sky-500"
+              placeholder="Ask for medicine (e.g. I have fever)..."
+              className="flex-1 px-3 py-2 bg-slate-800/90 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:border-teal-500"
             />
             <button
               onClick={() => handleSend()}
-              className="p-2 bg-sky-500 hover:bg-sky-400 text-slate-950 rounded-xl font-bold transition-all shadow-md active:scale-95"
+              className="p-2 bg-teal-500 hover:bg-teal-400 text-slate-950 rounded-xl font-bold transition-all shadow-md active:scale-95"
             >
               <Send className="w-4 h-4" />
             </button>
