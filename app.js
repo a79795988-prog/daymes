@@ -931,31 +931,130 @@ function matchBotResponse(query) {
     `;
   }
 
-  // 3. SMART MEDICINE REQUIREMENT FLOW: "I need medicine for [symptom]" / "What medicine should I take for [symptom]?"
-  const symptomKeywords = ['i need medicine for', 'medicine for fever', 'medicine for headache', 'medicine for pain', 'medicine for cold', 'medicine for allergy', 'medicine for cough', 'what medicine should i take'];
-  if (symptomKeywords.some(k => q.includes(k))) {
+  // 3. ILLNESS & SYMPTOM MEDICINE RECOMMENDATIONS
+  // A. Fever / High Temperature / Chills
+  if (q.includes('fever') || q.includes('temperature') || q.includes('feverish') || q.includes('chills') || q.includes('shivering')) {
+    const med = AppState.products.find(p => p.id === 'prod-1') || {
+      id: 'prod-1',
+      name: 'Paracetamol 500mg Extra Strength',
+      price: 4.99,
+      dosage: '1 tablet (500mg) every 4-6 hours as needed (Max 4,000mg/day)',
+      purpose: 'Fast-acting fever reduction and body ache relief'
+    };
+
     return `
-      <div class="space-y-2.5">
-        <div class="p-3 bg-slate-800 rounded-xl border border-slate-700 text-xs space-y-2">
-          <p class="font-bold text-sky-400 flex items-center gap-1">
-            <i data-lucide="info" class="w-4 h-4"></i>
-            <span>Healthcare Requirement Clarification</span>
+      <div class="space-y-2.5 text-xs">
+        <div class="p-3 bg-slate-800 rounded-2xl border border-teal-500/40 space-y-2">
+          <div class="flex items-center gap-2 text-teal-300 font-extrabold">
+            <i data-lucide="thermometer" class="w-4 h-4 text-teal-400"></i>
+            <span>AI Healthcare Recommendation: Fever Relief</span>
+          </div>
+          <p class="text-slate-200 leading-relaxed">
+            For fever and high body temperature, <strong>Paracetamol 500mg</strong> (Acetaminophen) is the primary recommended antipyretic medicine.
           </p>
-          <p class="text-slate-200">
-            DAYMES Assistant cannot safely choose or prescribe a medicine based only on described symptoms.
-          </p>
-          <p class="text-white font-semibold pt-1 border-t border-slate-700">
-            Are you looking for information about a medicine you already have, or do you need help deciding what kind of healthcare professional to consult?
+          <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-700 text-[11px] text-slate-300 space-y-1">
+            <p><strong>• Adult Dosage:</strong> 1 to 2 tablets (500mg–1000mg) every 4 to 6 hours with water.</p>
+            <p><strong>• Max Limit:</strong> Never exceed 8 tablets (4,000mg) within 24 hours.</p>
+            <p><strong>• Safe Care:</strong> Drink plenty of water or electrolyte fluids and rest well.</p>
+          </div>
+        </div>
+
+        <!-- Medicine Recommendation Card -->
+        <div class="p-3 bg-slate-900 rounded-xl border border-slate-700 flex items-center justify-between gap-2 shadow-sm">
+          <div>
+            <h5 class="font-bold text-white text-xs">${med.name}</h5>
+            <p class="text-[10px] text-teal-400">Recommended for Fever & Pain Relief</p>
+            <span class="text-xs font-black text-white">$${med.price.toFixed(2)}</span>
+          </div>
+          <button onclick="addToCart('${med.id}'); showToast('Added Paracetamol to Cart!', 'success');" class="px-3 py-1.5 bg-teal-500 hover:bg-teal-400 text-slate-950 font-black rounded-xl text-xs flex items-center gap-1 shadow-md transition-all active:scale-95">
+            <i data-lucide="shopping-cart" class="w-3.5 h-3.5"></i>
+            <span>+ Add to Cart</span>
+          </button>
+        </div>
+
+        <p class="text-[10px] text-amber-300/90">
+          ⚠️ <em>If fever exceeds 102°F (38.9°C) or lasts over 3 days, please consult a certified doctor.</em>
+        </p>
+
+        <div class="flex gap-2 pt-1">
+          <button onclick="openDoctorConsultModal('General Physician', 'Fever symptoms consultation')" class="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-teal-300 border border-slate-700 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5">
+            <i data-lucide="stethoscope" class="w-3.5 h-3.5"></i>
+            <span>Consult Doctor</span>
+          </button>
+          <button onclick="navigateTo('medicines')" class="py-2 px-3 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold">
+            Browse Catalog
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  // B. Headache / Migraine / Body Pain
+  if (q.includes('headache') || q.includes('migraine') || q.includes('head pain') || q.includes('body pain') || q.includes('body ache') || q.includes('toothache')) {
+    const med = AppState.products.find(p => p.id === 'prod-1');
+    const ibup = AppState.products.find(p => p.id === 'prod-4');
+
+    return `
+      <div class="space-y-2.5 text-xs">
+        <div class="p-3 bg-slate-800 rounded-2xl border border-sky-500/40 space-y-2">
+          <div class="flex items-center gap-2 text-sky-300 font-extrabold">
+            <i data-lucide="activity" class="w-4 h-4 text-sky-400"></i>
+            <span>AI Healthcare Recommendation: Pain Relief</span>
+          </div>
+          <p class="text-slate-200 leading-relaxed">
+            For headaches, tension, and mild body aches, <strong>Paracetamol 500mg</strong> is gentle on the stomach. For muscular swelling or toothaches, <strong>Ibuprofen 400mg</strong> (NSAID) taken with food is also effective.
           </p>
         </div>
-        <div class="flex flex-col gap-1.5 pt-1">
-          <button onclick="sendChatMessage('What is Paracetamol?')" class="w-full py-1.5 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-[11px] font-semibold text-left border border-slate-700 flex items-center gap-2">
-            <span>💊 Information on a medicine I already have (e.g. Paracetamol)</span>
+
+        ${med ? `
+        <div class="p-2.5 bg-slate-900 rounded-xl border border-slate-700 flex items-center justify-between gap-2 shadow-sm">
+          <div>
+            <h5 class="font-bold text-white text-xs">${med.name}</h5>
+            <span class="text-xs font-black text-white">$${med.price.toFixed(2)}</span>
+          </div>
+          <button onclick="addToCart('${med.id}'); showToast('Added Paracetamol to Cart!', 'success');" class="px-2.5 py-1.5 bg-teal-500 hover:bg-teal-400 text-slate-950 font-black rounded-lg text-xs">
+            + Add to Cart
           </button>
-          <button onclick="sendChatMessage('Healthcare Guidance')" class="w-full py-1.5 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-[11px] font-semibold text-left border border-slate-700 flex items-center gap-2">
-            <span>🩺 Guidance on consulting a doctor or pharmacist</span>
+        </div>` : ''}
+
+        ${ibup ? `
+        <div class="p-2.5 bg-slate-900 rounded-xl border border-slate-700 flex items-center justify-between gap-2 shadow-sm">
+          <div>
+            <h5 class="font-bold text-white text-xs">${ibup.name}</h5>
+            <span class="text-xs font-black text-white">$${ibup.price.toFixed(2)}</span>
+          </div>
+          <button onclick="addToCart('${ibup.id}'); showToast('Added Ibuprofen to Cart!', 'success');" class="px-2.5 py-1.5 bg-sky-500 hover:bg-sky-400 text-slate-950 font-black rounded-lg text-xs">
+            + Add to Cart
           </button>
+        </div>` : ''}
+      </div>
+    `;
+  }
+
+  // C. Cold / Allergy / Sneezing
+  if (q.includes('cold') || q.includes('allergy') || q.includes('sneezing') || q.includes('runny nose')) {
+    const med = AppState.products.find(p => p.id === 'prod-6');
+    return `
+      <div class="space-y-2.5 text-xs">
+        <div class="p-3 bg-slate-800 rounded-2xl border border-teal-500/40 space-y-2">
+          <div class="flex items-center gap-2 text-teal-300 font-extrabold">
+            <i data-lucide="wind" class="w-4 h-4 text-teal-400"></i>
+            <span>AI Healthcare Recommendation: Allergy & Cold</span>
+          </div>
+          <p class="text-slate-200 leading-relaxed">
+            For sneezing, runny nose, and allergic reactions, <strong>Cetirizine 10mg</strong> provides 24-hour non-drowsy relief. Take 1 tablet once daily with water.
+          </p>
         </div>
+        ${med ? `
+        <div class="p-2.5 bg-slate-900 rounded-xl border border-slate-700 flex items-center justify-between gap-2 shadow-sm">
+          <div>
+            <h5 class="font-bold text-white text-xs">${med.name}</h5>
+            <span class="text-xs font-black text-white">$${med.price.toFixed(2)}</span>
+          </div>
+          <button onclick="addToCart('${med.id}'); showToast('Added Cetirizine to Cart!', 'success');" class="px-2.5 py-1.5 bg-teal-500 hover:bg-teal-400 text-slate-950 font-black rounded-lg text-xs">
+            + Add to Cart
+          </button>
+        </div>` : ''}
       </div>
     `;
   }

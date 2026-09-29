@@ -1485,48 +1485,63 @@ function matchBotResponse(query) {
   }
 
   // 6. SYMPTOM: FEVER & BODY ACHES
-  if (q.includes('fever') || q.includes('feverish') || q.includes('high temperature') || q.includes('chills') || q.includes('body ache')) {
+  if (q.includes('fever') || q.includes('feverish') || q.includes('high temperature') || q.includes('chills') || q.includes('body ache') || q.includes('i have fever')) {
+    const med = AppState.products.find(p => p.id === 'prod-1') || {
+      id: 'prod-1',
+      name: 'Paracetamol 500mg Extra Strength',
+      price: 4.99,
+      dosage: '1 tablet (500mg) every 4-6 hours (Max 4,000mg/day)'
+    };
+
     return `
       <div class="space-y-3 text-xs">
-        <div class="p-3.5 bg-slate-900 rounded-2xl border border-slate-800 space-y-2">
-          <div class="flex items-center gap-2 text-sky-400 font-extrabold">
-            <i data-lucide="thermometer" class="w-4 h-4"></i>
-            <span>Fever & Body Temperature Guidance</span>
+        <div class="p-3.5 bg-slate-900 rounded-2xl border border-teal-500/40 space-y-2">
+          <div class="flex items-center gap-2 text-teal-300 font-extrabold">
+            <i data-lucide="thermometer" class="w-4 h-4 text-teal-400"></i>
+            <span>AI Healthcare Recommendation: Fever Relief</span>
           </div>
           <p class="text-slate-200 leading-relaxed">
-            Fever is commonly the body's natural immunological response when fighting viral or bacterial infections.
+            For fever reduction and body temperature control, <strong>Paracetamol 500mg</strong> (Acetaminophen) is the primary recommended first-line medicine.
           </p>
           <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 text-[11px] text-slate-300 space-y-1">
-            <strong class="text-white">💡 Safe Guidance:</strong>
-            <ul class="list-disc list-inside text-slate-400 space-y-0.5">
-              <li>Stay well hydrated with clean water, soups, or ORS electrolyte fluids.</li>
-              <li>Dress in lightweight, breathable cotton fabrics.</li>
-              <li>Rest and record temperature readings every 4 to 6 hours.</li>
-            </ul>
+            <p><strong>• Adult Dosage:</strong> 1 to 2 tablets (500mg–1000mg) every 4 to 6 hours with a full glass of water.</p>
+            <p><strong>• Maximum Limit:</strong> Do not exceed 8 tablets (4,000mg) in 24 hours.</p>
+            <p><strong>• Self-Care:</strong> Rest, wear light breathable clothing, and drink plenty of fluids/electrolytes.</p>
           </div>
+        </div>
+
+        <!-- Interactive Medicine Card -->
+        <div class="p-3 bg-slate-900/90 rounded-2xl border border-slate-700 flex items-center justify-between gap-2 shadow-sm">
+          <div>
+            <h5 class="font-bold text-white text-xs">${med.name}</h5>
+            <p class="text-[10px] text-teal-400">Primary Antipyretic & Fever Reducer</p>
+            <span class="text-xs font-black text-white">$${med.price.toFixed(2)}</span>
+          </div>
+          <button onclick="addToCart('${med.id}'); showToast('Added Paracetamol to Cart!', 'success');" class="px-3 py-1.5 bg-teal-500 hover:bg-teal-400 text-slate-950 font-black rounded-xl text-xs flex items-center gap-1 shadow-md transition-all active:scale-95">
+            <i data-lucide="shopping-cart" class="w-3.5 h-3.5"></i>
+            <span>+ Add to Cart</span>
+          </button>
         </div>
 
         <!-- Follow-up Questions Card -->
         <div class="p-3 bg-slate-900/80 rounded-2xl border border-slate-800 space-y-2">
           <p class="font-bold text-teal-300 text-[11px] flex items-center gap-1">
             <i data-lucide="help-circle" class="w-3.5 h-3.5"></i>
-            <span>Clarifying questions:</span>
+            <span>Quick temperature checks:</span>
           </p>
           <div class="space-y-1.5 text-[11px]">
-            <p class="text-slate-400">🌡️ What is your temperature range?</p>
+            <p class="text-slate-400">🌡️ Temperature Range:</p>
             <div class="flex flex-wrap gap-1.5">
               <button onclick="sendChatMessage('Severity: Mild fever (< 100°F)')" class="px-2.5 py-1 bg-slate-800 hover:bg-sky-600 hover:text-white rounded-lg text-slate-300 border border-slate-700 text-[10px] font-medium transition-all">&lt; 100°F (Mild)</button>
               <button onclick="sendChatMessage('Severity: Moderate (100-102°F)')" class="px-2.5 py-1 bg-slate-800 hover:bg-sky-600 hover:text-white rounded-lg text-slate-300 border border-slate-700 text-[10px] font-medium transition-all">100–102°F</button>
               <button onclick="sendChatMessage('Severity: High fever (> 102°F)')" class="px-2.5 py-1 bg-slate-800 hover:bg-rose-600 hover:text-white rounded-lg text-slate-300 border border-slate-700 text-[10px] font-medium transition-all">&gt; 102°F (High)</button>
             </div>
-            
-            <p class="text-slate-400 pt-1">⏱️ How many days have you had the fever?</p>
-            <div class="flex flex-wrap gap-1.5">
-              <button onclick="sendChatMessage('Duration: 1–2 days')" class="px-2.5 py-1 bg-slate-800 hover:bg-sky-600 hover:text-white rounded-lg text-slate-300 border border-slate-700 text-[10px] font-medium transition-all">1–2 days</button>
-              <button onclick="sendChatMessage('Duration: More than 3 days')" class="px-2.5 py-1 bg-slate-800 hover:bg-rose-600 hover:text-white rounded-lg text-slate-300 border border-slate-700 text-[10px] font-medium transition-all">&gt; 3 days (Doctor recommended)</button>
-            </div>
           </div>
         </div>
+
+        <p class="text-[10px] text-amber-300/90 text-center">
+          ⚠️ <em>If fever exceeds 102°F (38.9°C) or lasts over 3 days, please consult a certified doctor.</em>
+        </p>
 
         <!-- Action Buttons -->
         <div class="grid grid-cols-2 gap-2 pt-1">
@@ -1534,9 +1549,9 @@ function matchBotResponse(query) {
             <i data-lucide="stethoscope" class="w-3.5 h-3.5"></i>
             <span>👨‍⚕️ Consult Doctor</span>
           </button>
-          <button onclick="sendChatMessage('Paracetamol 500mg')" class="py-2 bg-slate-800 hover:bg-slate-700 text-sky-300 border border-slate-700 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5">
+          <button onclick="navigateTo('medicines')" class="py-2 bg-slate-800 hover:bg-slate-700 text-sky-300 border border-slate-700 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5">
             <i data-lucide="pill" class="w-3.5 h-3.5"></i>
-            <span>Paracetamol Info</span>
+            <span>Browse Catalog</span>
           </button>
         </div>
       </div>
