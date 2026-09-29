@@ -31,6 +31,26 @@ export const AuthModals: React.FC<AuthModalsProps> = ({ isOpen, onClose, onSucce
     setFullName('');
   };
 
+  const formatAuthError = (err: any): string => {
+    const msg = String(err?.code || err?.message || '');
+    if (msg.includes('auth/unauthorized-domain')) {
+      return 'Domain not authorized yet in Firebase. Please add "daymes.vercel.app" to Firebase Console > Authentication > Settings > Authorized domains.';
+    }
+    if (msg.includes('auth/popup-closed-by-user')) {
+      return 'Sign-in cancelled (popup was closed).';
+    }
+    if (msg.includes('auth/invalid-credential') || msg.includes('auth/wrong-password') || msg.includes('auth/user-not-found')) {
+      return 'Invalid email or password.';
+    }
+    if (msg.includes('auth/email-already-in-use')) {
+      return 'An account with this email address already exists. Please sign in instead.';
+    }
+    if (msg.includes('auth/weak-password')) {
+      return 'Password must be at least 6 characters.';
+    }
+    return err?.message?.replace(/^Firebase:\s*/, '') || 'Authentication failed. Please try again.';
+  };
+
   const handleGoogleSignIn = async () => {
     try {
       setLoading(true);
@@ -39,7 +59,7 @@ export const AuthModals: React.FC<AuthModalsProps> = ({ isOpen, onClose, onSucce
       onSuccess(user);
       onClose();
     } catch (err: any) {
-      setError(err.message || 'Google sign in failed');
+      setError(formatAuthError(err));
     } finally {
       setLoading(false);
     }
@@ -54,7 +74,7 @@ export const AuthModals: React.FC<AuthModalsProps> = ({ isOpen, onClose, onSucce
       onSuccess(user);
       onClose();
     } catch (err: any) {
-      setError(err.message || 'Invalid email or password');
+      setError(formatAuthError(err));
     } finally {
       setLoading(false);
     }
@@ -78,7 +98,7 @@ export const AuthModals: React.FC<AuthModalsProps> = ({ isOpen, onClose, onSucce
       onSuccess(user);
       onClose();
     } catch (err: any) {
-      setError(err.message || 'Failed to create account');
+      setError(formatAuthError(err));
     } finally {
       setLoading(false);
     }
@@ -97,7 +117,7 @@ export const AuthModals: React.FC<AuthModalsProps> = ({ isOpen, onClose, onSucce
       await AuthService.sendPasswordReset(email);
       setSuccessMsg('Reset email sent! Please check your inbox.');
     } catch (err: any) {
-      setError(err.message || 'Could not send reset email');
+      setError(formatAuthError(err));
     } finally {
       setLoading(false);
     }
