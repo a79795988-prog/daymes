@@ -11,6 +11,8 @@ import { EmergencyModal } from '@/components/EmergencyModal';
 import { DoctorConsultModal } from '@/components/DoctorConsultModal';
 import { ChatbotWidget } from '@/components/ChatbotWidget';
 import { Footer } from '@/components/Footer';
+import { ContactPage } from '@/components/ContactPage';
+import { ReorderPortal } from '@/components/ReorderPortal';
 import { AuthService, UserSession } from '@/services/authService';
 import { ApiService } from '@/services/api';
 import { MedicineItem, MEDICINES } from '@/lib/data';
@@ -168,44 +170,10 @@ export default function HomePage() {
         )}
 
         {activeTab === 'reorder' && (
-          <div className="space-y-6 max-w-3xl mx-auto py-8">
-            <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
-                <RefreshCw className="w-5 h-5" />
-              </div>
-              <div>
-                <h2 className="text-xl font-black text-white">Smart 1-Click Reorder Cabinet</h2>
-                <p className="text-xs text-slate-400">Routine medications scheduled for automated refill</p>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              {[
-                { name: 'Amoxicillin 500mg', lastOrder: '18 days ago', status: 'Refill Recommended', rx: true },
-                { name: 'Atorvastatin 20mg', lastOrder: '25 days ago', status: 'Refill Due Soon', rx: true },
-                { name: 'Vitamin D3 5000 IU', lastOrder: '1 month ago', status: 'Refill Ready', rx: false },
-              ].map((item, idx) => (
-                <div key={idx} className="p-4 bg-slate-900 border border-slate-800 rounded-2xl flex items-center justify-between">
-                  <div>
-                    <h4 className="text-xs font-bold text-white">{item.name}</h4>
-                    <p className="text-[11px] text-slate-400 mt-0.5">Last ordered: {item.lastOrder}</p>
-                    <span className="inline-block mt-1 px-2 py-0.5 text-[9px] font-bold bg-emerald-500/20 text-emerald-300 rounded-md">
-                      {item.status}
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => {
-                      const found = MEDICINES.find((m) => m.name.includes(item.name.split(' ')[0]));
-                      if (found) handleAddToCart(found);
-                    }}
-                    className="px-4 py-2 bg-teal-500 hover:bg-teal-400 text-slate-950 text-xs font-black rounded-xl shadow-md transition-all active:scale-95"
-                  >
-                    1-Click Refill
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
+          <ReorderPortal
+            onAddToCart={handleAddToCart}
+            onOpenCart={() => setIsCartOpen(true)}
+          />
         )}
 
         {activeTab === 'healthcare' && (
@@ -271,39 +239,7 @@ export default function HomePage() {
           </div>
         )}
 
-        {activeTab === 'contact' && (
-          <div className="space-y-6 max-w-2xl mx-auto py-8 text-xs">
-            <div className="border-b border-slate-800 pb-4">
-              <h2 className="text-xl font-black text-white">Contact & Pharmacy Support</h2>
-              <p className="text-xs text-slate-400">Reach certified pharmacists and customer care 24/7</p>
-            </div>
-
-            <div className="space-y-4">
-              <div className="p-4 bg-slate-900 border border-slate-800 rounded-2xl flex items-center justify-between">
-                <div>
-                  <h4 className="font-bold text-white">Pharmacy Helpline (Toll-Free)</h4>
-                  <p className="text-slate-400 text-[11px] mt-0.5">Available 24 hours a day, 7 days a week</p>
-                </div>
-                <a href="tel:18005550199" className="px-3 py-1.5 bg-sky-500 text-slate-950 font-bold rounded-xl">
-                  Call Now
-                </a>
-              </div>
-
-              <div className="p-4 bg-slate-900 border border-slate-800 rounded-2xl flex items-center justify-between">
-                <div>
-                  <h4 className="font-bold text-white">AI Health Care Chatbot</h4>
-                  <p className="text-slate-400 text-[11px] mt-0.5">Get instant answers to medication questions</p>
-                </div>
-                <button
-                  onClick={() => setIsAssistantOpen(true)}
-                  className="px-3 py-1.5 bg-teal-500 text-slate-950 font-bold rounded-xl"
-                >
-                  Open Assistant
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        {activeTab === 'contact' && <ContactPage />}
       </main>
 
       {/* Footer */}
