@@ -1,13 +1,41 @@
 /**
- * DAYMES - Authentication Module
- * Handles Sign Up, Sign In, Session Management, Logout, and Google OAuth 2.0 / GIS.
- * Passwords are hashed with SHA-256 before storage. No plain-text storage.
+ * DAYMES - Authentication Module with Firebase Auth Integration
+ * Handles Firebase Auth (Email/Password, Google Popup, Password Reset, Auth State Listener),
+ * Google Identity Services (GIS), and resilient local storage fallback.
  */
 
+// ─── Firebase Auth Error Message Formatter ──────────────────────────────────
+function formatFirebaseError(err) {
+  if (!err) return 'An unexpected authentication error occurred.';
+  const code = err.code || '';
+  switch (code) {
+    case 'auth/email-already-in-use':
+      return 'An account with this email already exists. Please sign in instead.';
+    case 'auth/invalid-email':
+      return 'Please enter a valid email address.';
+    case 'auth/user-not-found':
+      return 'No account found with this email. Please check or sign up.';
+    case 'auth/wrong-password':
+    case 'auth/invalid-credential':
+      return 'Incorrect email or password. Please try again.';
+    case 'auth/weak-password':
+      return 'Password should be at least 6 characters long.';
+    case 'auth/popup-closed-by-user':
+      return 'Google sign-in popup was closed before completing.';
+    case 'auth/popup-blocked':
+      return 'Sign-in popup was blocked by your browser. Please allow popups for this site.';
+    case 'auth/operation-not-allowed':
+      return 'This sign-in method is not enabled in your Firebase Console.';
+    case 'auth/network-request-failed':
+      return 'Network connection error. Please check your internet connection.';
+    case 'auth/too-many-requests':
+      return 'Too many unsuccessful attempts. Please wait a moment and try again.';
+    default:
+      return err.message || 'Authentication error. Please try again.';
+  }
+}
+
 // ─── Google OAuth 2.0 / Identity Services Configuration ────────────────────
-// To use your official Google Client ID from Google Cloud Console:
-// 1. Set window.DAYMES_GOOGLE_CLIENT_ID = 'YOUR_CLIENT_ID.apps.googleusercontent.com'
-// 2. Or replace the default clientId below.
 const GOOGLE_AUTH_CONFIG = {
   clientId: window.DAYMES_GOOGLE_CLIENT_ID || '108234918234-yourclientid.apps.googleusercontent.com',
   isConfigured: function() {
@@ -36,7 +64,7 @@ function safeStorageSet(key, val) {
       window.localStorage.setItem(key, val);
     }
   } catch (e) {
-    // Safari Private Browsing quota/security restriction fallback
+    // Safari Private Browsing fallback
   }
   window._DAYMES_MEM_STORE[key] = val;
 }
@@ -47,7 +75,7 @@ function safeStorageRemove(key) {
       window.localStorage.removeItem(key);
     }
   } catch (e) {
-    // Safari Private Browsing
+    // Safari Private Browsing fallback
   }
   delete window._DAYMES_MEM_STORE[key];
 }
@@ -56,7 +84,7 @@ window.safeStorageGet = safeStorageGet;
 window.safeStorageSet = safeStorageSet;
 window.safeStorageRemove = safeStorageRemove;
 
-// ─── SHA-256 Password Hashing (Web Crypto API + Safari / Non-HTTPS Fallback) ─
+// ─── SHA-256 Password Hashing Fallback ────────────────────────────────────
 async function hashPassword(password) {
   try {
     if (typeof window !== 'undefined' && window.crypto && window.crypto.subtle && typeof window.crypto.subtle.digest === 'function') {
@@ -68,7 +96,6 @@ async function hashPassword(password) {
   } catch (err) {
     console.warn('DAYMES: Web Crypto SHA-256 unavailable in this context, using compatible hash fallback:', err);
   }
-  // Compatible hash fallback for older Safari / non-HTTPS
   let h1 = 0xdeadbeef ^ password.length, h2 = 0x41c6ce57 ^ password.length;
   for (let i = 0; i < password.length; i++) {
     const ch = password.charCodeAt(i);
@@ -84,7 +111,7 @@ async function hashPassword(password) {
 const AUTH_USERS_KEY   = 'daymes_users';
 const AUTH_SESSION_KEY = 'daymes_session';
 
-// ─── Helpers: Read / Write ─────────────────────────────────────────────────
+// ─── Helpers: Read / Write Session ─────────────────────────────────────────
 function getUsers() {
   try {
     const val = safeStorageGet(AUTH_USERS_KEY);
@@ -113,7 +140,6 @@ function getSession() {
 
 function saveSession(user) {
   try {
-    // Strip password hash before saving to session
     const { passwordHash: _, ...safeUser } = user;
     safeStorageSet(AUTH_SESSION_KEY, JSON.stringify(safeUser));
   } catch (e) {
@@ -131,6 +157,152 @@ function isLoggedIn() {
 
 function getCurrentUser() {
   return getSession();
+}
+
+// ─── Firebase Auth Integration API Wrappers ────────────────────────────────
+
+/**
+ * Initialize Firebase Auth state listener to synchronize session
+ */
+function initFirebaseAuthListener() {
+  if (typeof firebase !== 'undefined' && firebase.auth) {
+    try {
+      const auth = firebase.auth();
+      auth.onAuthStateChanged((fbUser) => {
+        if (fbUser) {
+          console.log('🔥 DAYMES: Firebase Auth state changed -> Logged in:', fbUser.email);
+          const userSession = {
+            id: fbUser.uid,
+            uid: fbUser.uid,
+            fullName: fbUser.displayName || fbUser.email?.split('@')[0] || 'Firebase User',
+            email: fbUser.email || '',
+            mobile: fbUser.phoneNumber || '',
+            picture: fbUser.photoURL || '',
+            provider: fbUser.providerData?.[0]?.providerId || 'firebase',
+            emailVerified: fbUser.emailVerified,
+            isFirebase: true
+          };
+          saveSession(userSession);
+          updateAuthUI();
+        } else {
+          console.log('🔥 DAYMES: Firebase Auth state changed -> Logged out');
+        }
+      });
+    } catch (e) {
+      console.warn('DAYMES: Firebase Auth listener setup error:', e);
+    }
+  }
+}
+
+/**
+ * Firebase Register with Email & Password
+ */
+async function firebaseRegister({ fullName, email, password }) {
+  if (typeof firebase !== 'undefined' && firebase.auth && window.DAYMES_FIREBASE?.isConfigured()) {
+    try {
+      const auth = firebase.auth();
+      const cred = await auth.createUserWithEmailAndPassword(email, password);
+      if (cred.user) {
+        await cred.user.updateProfile({ displayName: fullName });
+        const user = {
+          id: cred.user.uid,
+          uid: cred.user.uid,
+          fullName: fullName,
+          email: cred.user.email,
+          provider: 'firebase-email',
+          emailVerified: cred.user.emailVerified,
+          isFirebase: true
+        };
+        saveSession(user);
+        return { success: true, user };
+      }
+    } catch (err) {
+      console.warn('DAYMES: Firebase register attempt failed:', err);
+      return { success: false, error: formatFirebaseError(err) };
+    }
+  }
+  return null; // Not configured or unavailable
+}
+
+/**
+ * Firebase Login with Email & Password
+ */
+async function firebaseLogin({ email, password }) {
+  if (typeof firebase !== 'undefined' && firebase.auth && window.DAYMES_FIREBASE?.isConfigured()) {
+    try {
+      const auth = firebase.auth();
+      const cred = await auth.signInWithEmailAndPassword(email, password);
+      if (cred.user) {
+        const user = {
+          id: cred.user.uid,
+          uid: cred.user.uid,
+          fullName: cred.user.displayName || cred.user.email.split('@')[0],
+          email: cred.user.email,
+          picture: cred.user.photoURL || '',
+          provider: 'firebase-email',
+          emailVerified: cred.user.emailVerified,
+          isFirebase: true
+        };
+        saveSession(user);
+        return { success: true, user };
+      }
+    } catch (err) {
+      console.warn('DAYMES: Firebase login attempt failed:', err);
+      return { success: false, error: formatFirebaseError(err) };
+    }
+  }
+  return null; // Not configured or unavailable
+}
+
+/**
+ * Firebase Google Sign-In with Popup
+ */
+async function firebaseGoogleSignIn() {
+  if (typeof firebase !== 'undefined' && firebase.auth && window.DAYMES_FIREBASE?.isConfigured()) {
+    try {
+      const auth = firebase.auth();
+      const provider = new firebase.auth.GoogleAuthProvider();
+      provider.addScope('profile');
+      provider.addScope('email');
+      
+      const cred = await auth.signInWithPopup(provider);
+      if (cred.user) {
+        const user = {
+          id: cred.user.uid,
+          uid: cred.user.uid,
+          fullName: cred.user.displayName || 'Google User',
+          email: cred.user.email,
+          picture: cred.user.photoURL || '',
+          provider: 'google.com',
+          emailVerified: cred.user.emailVerified,
+          isFirebase: true
+        };
+        saveSession(user);
+        return { success: true, user };
+      }
+    } catch (err) {
+      console.warn('DAYMES: Firebase Google popup login failed:', err);
+      return { success: false, error: formatFirebaseError(err) };
+    }
+  }
+  return null;
+}
+
+/**
+ * Firebase Password Reset Email
+ */
+async function firebaseResetPassword(email) {
+  if (typeof firebase !== 'undefined' && firebase.auth) {
+    try {
+      const auth = firebase.auth();
+      await auth.sendPasswordResetEmail(email);
+      return { success: true, message: `Password reset link successfully sent to ${email}. Check your inbox!` };
+    } catch (err) {
+      return { success: false, error: formatFirebaseError(err) };
+    }
+  }
+  // Local fallback simulation
+  return { success: true, message: `Simulated password reset email sent to ${email}.` };
 }
 
 // ─── JWT Parser for Google ID Tokens ───────────────────────────────────────
@@ -178,7 +350,6 @@ async function handleGoogleCredentialResponse(response) {
     updateAuthUI();
     showToast(`Welcome, ${result.user.fullName.split(' ')[0]}! Signed in with Google. 👋`, 'success');
 
-    // Handle redirect
     const redirectTab = document.getElementById('signin-modal')?.dataset?.redirectTab;
     const gateEl = document.getElementById('auth-gate-modal');
     const gatePendingTab = gateEl ? gateEl.dataset.pendingTab : null;
@@ -200,7 +371,6 @@ async function processGoogleUser({ googleId, fullName, email, picture, emailVeri
   let user = users.find(u => u.email === emailLower);
 
   if (!user) {
-    // New Google User Registration
     user = {
       id: 'google-' + (googleId || Date.now()),
       googleId: googleId || '',
@@ -215,7 +385,6 @@ async function processGoogleUser({ googleId, fullName, email, picture, emailVeri
     users.push(user);
     saveUsers(users);
   } else {
-    // Existing account: Link Google info
     let modified = false;
     if (!user.googleId && googleId) { user.googleId = googleId; modified = true; }
     if (picture && !user.picture) { user.picture = picture; modified = true; }
@@ -228,13 +397,35 @@ async function processGoogleUser({ googleId, fullName, email, picture, emailVeri
 }
 
 // ─── Trigger "Continue with Google" ────────────────────────────────────────
-function continueWithGoogle(source = 'signin') {
-  // If official Google Identity Services is available and Client ID is configured
+async function continueWithGoogle(source = 'signin') {
+  // 1. Try Firebase Google Sign-In Popup first if Firebase is configured
+  if (typeof firebase !== 'undefined' && firebase.auth) {
+    showToast('Opening Firebase Google Sign-In popup…', 'info');
+    const fbResult = await firebaseGoogleSignIn();
+    if (fbResult && fbResult.success) {
+      closeSignInModal();
+      closeSignUpModal();
+      updateAuthUI();
+      showToast(`Welcome, ${fbResult.user.fullName.split(' ')[0]}! Signed in via Firebase Google. 🔥`, 'success');
+      
+      const redirectTab = document.getElementById('signin-modal')?.dataset?.redirectTab;
+      const gateEl = document.getElementById('auth-gate-modal');
+      const gatePendingTab = gateEl ? gateEl.dataset.pendingTab : null;
+      closeAuthGate();
+
+      const targetTab = redirectTab || gatePendingTab;
+      if (targetTab) navigateTo(targetTab);
+      return;
+    } else if (fbResult && fbResult.error && !fbResult.error.includes('closed')) {
+      showToast(fbResult.error, 'error');
+    }
+  }
+
+  // 2. If Google Identity Services is available and Client ID is configured
   if (window.google && window.google.accounts && window.google.accounts.id && GOOGLE_AUTH_CONFIG.isConfigured()) {
     try {
       google.accounts.id.prompt((notification) => {
         if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          // If prompt was dismissed or blocked, trigger credential selection
           console.log('GIS prompt status:', notification.getNotDisplayedReason());
         }
       });
@@ -244,13 +435,12 @@ function continueWithGoogle(source = 'signin') {
     }
   }
 
-  // Demo / Test Google Account Selector (for immediate testing before adding Google Cloud Console Client ID)
+  // 3. Fallback: Demo Google account selector
   showGoogleDemoSelector(source);
 }
 
-// Demo Google account selection modal (used when Client ID is in demo mode)
+// Demo Google account selection modal
 function showGoogleDemoSelector(source) {
-  // Demo accounts for instant prototype testing
   const demoAccounts = [
     {
       name: 'Sarah Jenkins',
@@ -266,7 +456,6 @@ function showGoogleDemoSelector(source) {
     }
   ];
 
-  // Remove existing demo modal if any
   const existing = document.getElementById('google-demo-modal');
   if (existing) existing.remove();
 
@@ -306,17 +495,16 @@ function showGoogleDemoSelector(source) {
         </div>
 
         <div class="pt-2 border-t border-slate-800 text-[10px] text-slate-400 text-center leading-tight">
-          To connect your own Google Cloud Client ID, configure <code class="text-sky-300 bg-slate-800 px-1 py-0.5 rounded">window.DAYMES_GOOGLE_CLIENT_ID</code>.
+          🔥 Powered by <span class="text-amber-400 font-bold">Firebase Auth</span>. Customize <code class="text-sky-300 bg-slate-800 px-1 py-0.5 rounded">window.DAYMES_FIREBASE_CONFIG</code> for live Firebase Console link.
         </div>
       </div>
     </div>
   `;
 
   document.body.insertAdjacentHTML('beforeend', modalHtml);
-  lucide.createIcons();
+  if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
-// Select a demo Google account
 async function selectGoogleDemoAccount(name, email, picture, googleId) {
   const modal = document.getElementById('google-demo-modal');
   if (modal) modal.remove();
@@ -335,7 +523,6 @@ async function selectGoogleDemoAccount(name, email, picture, googleId) {
     updateAuthUI();
     showToast(`Welcome back, ${result.user.fullName.split(' ')[0]}! Signed in with Google. 👋`, 'success');
 
-    // Handle redirect
     const redirectTab = document.getElementById('signin-modal')?.dataset?.redirectTab;
     const gateEl = document.getElementById('auth-gate-modal');
     const gatePendingTab = gateEl ? gateEl.dataset.pendingTab : null;
@@ -348,7 +535,6 @@ async function selectGoogleDemoAccount(name, email, picture, googleId) {
   }
 }
 
-// Initialize Google Identity Services
 function initGoogleIdentity() {
   if (window.google && window.google.accounts && window.google.accounts.id && GOOGLE_AUTH_CONFIG.isConfigured()) {
     try {
@@ -367,7 +553,18 @@ function initGoogleIdentity() {
 
 // ─── Registration ──────────────────────────────────────────────────────────
 async function registerUser({ fullName, email, mobile, password }) {
-  // --- Backend Integration (try server first, fall back to local) ---
+  // 1. Try Firebase Auth Registration first if configured
+  const fbResult = await firebaseRegister({ fullName, email, password });
+  if (fbResult) {
+    if (fbResult.success) {
+      updateAuthUI();
+      return fbResult;
+    } else if (fbResult.error) {
+      return fbResult; // Surface Firebase explicit error (e.g. email already in use)
+    }
+  }
+
+  // 2. Try Backend API Registration if available
   if (typeof DaymesAPI !== 'undefined' && backendAvailable) {
     try {
       const apiResult = await DaymesAPI.register({ fullName, email, mobile, password });
@@ -382,8 +579,8 @@ async function registerUser({ fullName, email, mobile, password }) {
       }
     } catch (e) { console.warn('[Auth] Backend register failed, using local:', e); }
   }
-  // --- End Backend Integration ---
 
+  // 3. Fallback: Local Storage Account Store
   const users = getUsers();
   const emailLower = email.trim().toLowerCase();
 
@@ -411,7 +608,18 @@ async function registerUser({ fullName, email, mobile, password }) {
 
 // ─── Login ─────────────────────────────────────────────────────────────────
 async function loginUser({ email, password }) {
-  // --- Backend Integration ---
+  // 1. Try Firebase Auth Login first if configured
+  const fbResult = await firebaseLogin({ email, password });
+  if (fbResult) {
+    if (fbResult.success) {
+      updateAuthUI();
+      return fbResult;
+    } else if (fbResult.error) {
+      return fbResult; // Surface Firebase login error
+    }
+  }
+
+  // 2. Try Backend API Login
   if (typeof DaymesAPI !== 'undefined' && backendAvailable) {
     try {
       const apiResult = await DaymesAPI.login({ email, password });
@@ -426,8 +634,8 @@ async function loginUser({ email, password }) {
       }
     } catch (e) { console.warn('[Auth] Backend login failed, using local:', e); }
   }
-  // --- End Backend Integration ---
 
+  // 3. Fallback: Local Storage Account Store
   const users = getUsers();
   const emailLower = email.trim().toLowerCase();
   const user = users.find(u => u.email === emailLower);
@@ -451,15 +659,19 @@ async function loginUser({ email, password }) {
 
 // ─── Logout ────────────────────────────────────────────────────────────────
 function logoutUser() {
-  // --- Backend Integration ---
-  if (typeof DaymesAPI !== 'undefined') {
-    DaymesAPI.logout().catch(() => {}); // fire-and-forget
+  // Sign out from Firebase if authenticated
+  if (typeof firebase !== 'undefined' && firebase.auth) {
+    try {
+      firebase.auth().signOut().catch(e => console.warn('Firebase signOut error:', e));
+    } catch (e) {}
   }
-  // --- End Backend Integration ---
+
+  if (typeof DaymesAPI !== 'undefined') {
+    DaymesAPI.logout().catch(() => {});
+  }
 
   clearSession();
-  
-  // Disable Google Auto-Select if GIS is loaded
+
   if (window.google && window.google.accounts && window.google.accounts.id) {
     try {
       google.accounts.id.disableAutoSelect();
@@ -471,7 +683,7 @@ function logoutUser() {
   showToast('You have been signed out of DAYMES.', 'info');
 }
 
-// ─── UI Rendering ──────────────────────────────────────────────────────────
+// ─── UI Rendering & State ──────────────────────────────────────────────────
 function updateAuthUI() {
   const session = getSession();
   const signInBtn  = document.getElementById('auth-signin-btn');
@@ -479,19 +691,16 @@ function updateAuthUI() {
   const profileName = document.getElementById('auth-profile-name');
   const profileInitial = document.getElementById('auth-profile-initial');
 
-  // Mobile counterparts
   const mobileSignIn = document.getElementById('mobile-signin-btn');
   const mobileProfile = document.getElementById('mobile-profile-section');
   const mobileProfileName = document.getElementById('mobile-profile-name');
   const mobileProfileInitial = document.getElementById('mobile-profile-initial');
 
   if (session) {
-    // Logged in state
     if (signInBtn)  signInBtn.classList.add('hidden');
     if (profileMenu) profileMenu.classList.remove('hidden');
     if (profileName) profileName.textContent = session.fullName.split(' ')[0];
 
-    // Avatar display: picture if available, otherwise initial
     if (profileInitial) {
       if (session.picture) {
         profileInitial.innerHTML = `<img src="${session.picture}" alt="${session.fullName}" class="w-full h-full rounded-full object-cover" />`;
@@ -500,13 +709,19 @@ function updateAuthUI() {
       }
     }
 
-    // Dropdown details
     const dropdownName  = document.getElementById('profile-dropdown-name');
     const dropdownEmail = document.getElementById('profile-dropdown-email');
+    const dropdownBadge = document.getElementById('profile-dropdown-badge');
+    
     if (dropdownName)  dropdownName.textContent  = session.fullName;
     if (dropdownEmail) dropdownEmail.textContent = session.email;
+    if (dropdownBadge) {
+      const providerLabel = session.isFirebase 
+        ? (session.provider === 'google.com' ? '🔥 Firebase Google' : '🔥 Firebase Auth')
+        : (session.provider === 'google' ? 'Google OAuth' : 'DAYMES Member');
+      dropdownBadge.textContent = providerLabel;
+    }
 
-    // Mobile menu details
     if (mobileSignIn) mobileSignIn.classList.add('hidden');
     if (mobileProfile) mobileProfile.classList.remove('hidden');
     if (mobileProfileName) mobileProfileName.textContent = session.fullName;
@@ -518,7 +733,6 @@ function updateAuthUI() {
       }
     }
   } else {
-    // Logged out state
     if (signInBtn)  signInBtn.classList.remove('hidden');
     if (profileMenu) profileMenu.classList.add('hidden');
 
@@ -529,32 +743,63 @@ function updateAuthUI() {
 
 // ─── Auth Modal Controllers ─────────────────────────────────────────────────
 function openSignInModal(redirectTab = null) {
-  document.getElementById('signin-modal').classList.remove('hidden');
-  document.getElementById('signup-modal').classList.add('hidden');
-  document.getElementById('signin-error').textContent = '';
-  document.getElementById('signin-form').reset();
+  document.getElementById('signin-modal')?.classList.remove('hidden');
+  document.getElementById('signup-modal')?.classList.add('hidden');
+  document.getElementById('reset-password-modal')?.classList.add('hidden');
+  
+  const errEl = document.getElementById('signin-error');
+  if (errEl) errEl.textContent = '';
+  document.getElementById('signin-form')?.reset();
+  
   if (redirectTab) {
     document.getElementById('signin-modal').dataset.redirectTab = redirectTab;
   } else {
-    delete document.getElementById('signin-modal').dataset.redirectTab;
+    delete document.getElementById('signin-modal')?.dataset.redirectTab;
   }
-  lucide.createIcons();
+  if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 function closeSignInModal() {
-  document.getElementById('signin-modal').classList.add('hidden');
+  document.getElementById('signin-modal')?.classList.add('hidden');
 }
 
 function openSignUpModal() {
-  document.getElementById('signup-modal').classList.remove('hidden');
-  document.getElementById('signin-modal').classList.add('hidden');
-  document.getElementById('signup-error').textContent = '';
-  document.getElementById('signup-form').reset();
-  lucide.createIcons();
+  document.getElementById('signup-modal')?.classList.remove('hidden');
+  document.getElementById('signin-modal')?.classList.add('hidden');
+  document.getElementById('reset-password-modal')?.classList.add('hidden');
+  
+  const errEl = document.getElementById('signup-error');
+  if (errEl) errEl.textContent = '';
+  document.getElementById('signup-form')?.reset();
+  if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 function closeSignUpModal() {
-  document.getElementById('signup-modal').classList.add('hidden');
+  document.getElementById('signup-modal')?.classList.add('hidden');
+}
+
+function openForgotPasswordModal() {
+  document.getElementById('signin-modal')?.classList.add('hidden');
+  document.getElementById('signup-modal')?.classList.add('hidden');
+  document.getElementById('reset-password-modal')?.classList.remove('hidden');
+  
+  const msgEl = document.getElementById('reset-password-msg');
+  if (msgEl) {
+    msgEl.textContent = '';
+    msgEl.className = 'text-xs font-semibold min-h-[1rem]';
+  }
+  
+  // Pre-fill email from sign-in form if present
+  const signinEmail = document.getElementById('signin-email')?.value;
+  const resetEmailInput = document.getElementById('reset-password-email');
+  if (signinEmail && resetEmailInput) {
+    resetEmailInput.value = signinEmail;
+  }
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function closeForgotPasswordModal() {
+  document.getElementById('reset-password-modal')?.classList.add('hidden');
 }
 
 function switchToSignUp() {
@@ -564,12 +809,14 @@ function switchToSignUp() {
 
 function switchToSignIn() {
   closeSignUpModal();
+  closeForgotPasswordModal();
   openSignInModal();
 }
 
 function togglePasswordVisibility(inputId, toggleBtnId) {
   const input = document.getElementById(inputId);
   const btn   = document.getElementById(toggleBtnId);
+  if (!input || !btn) return;
   if (input.type === 'password') {
     input.type = 'text';
     btn.innerHTML = '<i data-lucide="eye-off" class="w-4 h-4"></i>';
@@ -577,7 +824,7 @@ function togglePasswordVisibility(inputId, toggleBtnId) {
     input.type = 'password';
     btn.innerHTML = '<i data-lucide="eye" class="w-4 h-4"></i>';
   }
-  lucide.createIcons();
+  if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 function toggleProfileDropdown() {
@@ -585,18 +832,11 @@ function toggleProfileDropdown() {
   if (!dropdown) return;
   dropdown.classList.toggle('hidden');
   if (!dropdown.classList.contains('hidden')) {
-    const session = getCurrentUser();
-    if (session) {
-      const nameEl  = document.getElementById('profile-dropdown-name');
-      const emailEl = document.getElementById('profile-dropdown-email');
-      if (nameEl)  nameEl.textContent  = session.fullName;
-      if (emailEl) emailEl.textContent = session.email;
-    }
-    lucide.createIcons();
+    updateAuthUI();
+    if (typeof lucide !== 'undefined') lucide.createIcons();
   }
 }
 
-// Close profile dropdown when clicking outside
 document.addEventListener('click', (e) => {
   const menu = document.getElementById('auth-profile-menu');
   const dropdown = document.getElementById('profile-dropdown');
@@ -607,9 +847,11 @@ document.addEventListener('click', (e) => {
 
 // ─── Form Event Listeners ──────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  // Initialize Google Identity Services
+  // Initialize Firebase Auth listener & Google Identity
+  initFirebaseAuthListener();
   initGoogleIdentity();
 
+  // Sign In Submit Handler
   const signinForm = document.getElementById('signin-form');
   if (signinForm) {
     signinForm.addEventListener('submit', async (e) => {
@@ -628,12 +870,11 @@ document.addEventListener('DOMContentLoaded', () => {
       submitBtn.disabled = false;
       submitBtn.textContent = 'Sign In';
 
-      if (result.success) {
+      if (result && result.success) {
         closeSignInModal();
         updateAuthUI();
         showToast(`Welcome back, ${result.user.fullName.split(' ')[0]}! 👋`, 'success');
 
-        // Handle redirect from sign-in modal or auth gate
         const redirectTab = document.getElementById('signin-modal').dataset.redirectTab;
         const gateEl = document.getElementById('auth-gate-modal');
         const gatePendingTab = gateEl ? gateEl.dataset.pendingTab : null;
@@ -644,33 +885,32 @@ document.addEventListener('DOMContentLoaded', () => {
           navigateTo(targetTab);
         }
       } else {
-        errorEl.textContent = result.error;
+        errorEl.textContent = result?.error || 'Sign in failed. Please try again.';
       }
     });
   }
 
-  // ─── Sign Up Form Submit ────────────────────────────────────────────────
+  // Sign Up Submit Handler
   const signupForm = document.getElementById('signup-form');
   if (signupForm) {
     signupForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const fullName        = document.getElementById('signup-name').value;
       const email           = document.getElementById('signup-email').value;
-      const mobile          = document.getElementById('signup-mobile').value;
+      const mobile          = document.getElementById('signup-mobile')?.value || '';
       const password        = document.getElementById('signup-password').value;
-      const confirmPassword = document.getElementById('signup-confirm-password').value;
+      const confirmPassword = document.getElementById('signup-confirm-password')?.value || password;
       const errorEl         = document.getElementById('signup-error');
       const submitBtn       = document.getElementById('signup-submit-btn');
 
       errorEl.textContent = '';
 
-      // Validation
       if (password !== confirmPassword) {
         errorEl.textContent = 'Passwords do not match. Please try again.';
         return;
       }
-      if (password.length < 8) {
-        errorEl.textContent = 'Password must be at least 8 characters long.';
+      if (password.length < 6) {
+        errorEl.textContent = 'Password must be at least 6 characters long.';
         return;
       }
       if (!/^\S+@\S+\.\S+$/.test(email)) {
@@ -686,16 +926,50 @@ document.addEventListener('DOMContentLoaded', () => {
       submitBtn.disabled = false;
       submitBtn.textContent = 'Create Account';
 
-      if (result.success) {
+      if (result && result.success) {
         closeSignUpModal();
         updateAuthUI();
         showToast(`Welcome to DAYMES, ${result.user.fullName.split(' ')[0]}! 🎉`, 'success');
       } else {
-        errorEl.textContent = result.error;
+        errorEl.textContent = result?.error || 'Registration failed. Please try again.';
       }
     });
   }
 
-  // Initialize auth UI on page load
+  // Forgot Password Submit Handler
+  const resetForm = document.getElementById('reset-password-form');
+  if (resetForm) {
+    resetForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('reset-password-email').value;
+      const msgEl = document.getElementById('reset-password-msg');
+      const submitBtn = document.getElementById('reset-password-submit-btn');
+
+      if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+        msgEl.textContent = 'Please enter a valid email address.';
+        msgEl.className = 'text-xs font-semibold text-rose-400 min-h-[1rem]';
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Sending reset link…';
+
+      const result = await firebaseResetPassword(email);
+
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Send Reset Email';
+
+      if (result.success) {
+        msgEl.textContent = result.message;
+        msgEl.className = 'text-xs font-semibold text-emerald-400 min-h-[1rem]';
+        showToast('Password reset link sent to your email! 📧', 'success');
+      } else {
+        msgEl.textContent = result.error;
+        msgEl.className = 'text-xs font-semibold text-rose-400 min-h-[1rem]';
+      }
+    });
+  }
+
+  // Initial Auth UI Sync
   updateAuthUI();
 });

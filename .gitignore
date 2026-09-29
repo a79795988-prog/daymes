@@ -1,33 +1,24 @@
-# DAYMES — Project Ignore Rules
+# Next.js
+.next/
+out/
 
-# macOS system files
-.DS_Store
-.AppleDouble
-.LSOverride
-
-# IDE directories
-.vscode/
-.idea/
-*.code-workspace
-
-# Logs
-*.log
+# Node
+node_modules/
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Temporary files
-*.tmp
-*.swp
-*~
+# Environment
+.env*.local
+.env
 
-# Local server scripts
-start-server.sh
+# Vercel
+.vercel
 
-# Java / Maven / Spring Boot
-target/
-*.class
-*.jar
-*.war
-.settings/
-.classpath
-.project
-.idea/
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# OS
+.DS_Store
+*.pem

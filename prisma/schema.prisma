@@ -1,0 +1,79 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String      @id @default(cuid())
+  email         String      @unique
+  fullName      String
+  mobile        String?
+  picture       String?
+  provider      String      @default("local") // local, google, firebase
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  orders        Order[]
+  reminders     Reminder[]
+  cartItems     CartItem[]
+}
+
+model Medicine {
+  id            String      @id @default(cuid())
+  name          String
+  brand         String
+  category      String
+  dosage        String
+  price         Float
+  originalPrice Float?
+  rating        Float       @default(4.8)
+  reviewsCount  Int         @default(120)
+  requiresRx    Boolean     @default(false)
+  image         String
+  stock         Int         @default(50)
+  description   String
+  composition   String?
+  instructions  String?
+  createdAt     DateTime    @default(now())
+}
+
+model CartItem {
+  id            String      @id @default(cuid())
+  userId        String
+  productId     String
+  qty           Int         @default(1)
+  createdAt     DateTime    @default(now())
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Order {
+  id            String      @id @default(cuid())
+  userId        String
+  items         Json
+  subtotal      Float
+  tax           Float
+  shipping      Float
+  total         Float
+  shippingName  String
+  shippingPhone String
+  address       String
+  paymentMethod String
+  status        String      @default("Processing")
+  prescription  String?
+  createdAt     DateTime    @default(now())
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Reminder {
+  id            String      @id @default(cuid())
+  userId        String
+  medicine      String
+  time          String
+  instruction   String
+  active        Boolean     @default(true)
+  createdAt     DateTime    @default(now())
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
