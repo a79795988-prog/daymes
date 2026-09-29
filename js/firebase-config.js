@@ -9,12 +9,13 @@
  */
 
 window.DAYMES_FIREBASE_CONFIG = window.DAYMES_FIREBASE_CONFIG || {
-  apiKey: "AIzaSyDAYMESDemoKey1234567890ABCDEFGH",
+  apiKey: "AIzaSyB_vtXDWTTRRzNUB2Fwvd2IpEyH6h51XGg",
   authDomain: "daymes-medicare.firebaseapp.com",
   projectId: "daymes-medicare",
-  storageBucket: "daymes-medicare.appspot.com",
-  messagingSenderId: "109876543210",
-  appId: "1:109876543210:web:abcdef1234567890"
+  storageBucket: "daymes-medicare.firebasestorage.app",
+  messagingSenderId: "394995227787",
+  appId: "1:394995227787:web:33030fa930a6d023d1488e",
+  measurementId: "G-1S8QCRJ9KK"
 };
 
 // Global reference for Firebase App & Auth instance
